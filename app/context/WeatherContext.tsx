@@ -1,21 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useLog } from '../context/LogContext';
-import DailyForecast from './DailyForecast';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useLog } from "./LogContext";
+import { Forecast } from "../types/forecast";
+
+const city = process.env.NEXT_PUBLIC_WEATHER_CITY || "Budapest";
+
+type WeatherContextType = {
+    refreshWeather: () => void;
+    weatherCity: string;
+    weatherToday: Forecast[] | null;
+    weatherForecast: Forecast[] | null;
+};
 
 const openWeatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY || "";
 const pollingInterval = 10 * 60 * 1000; // 10 minutes
 
+const WeatherContext = createContext<WeatherContextType | null>(null);
 
-export default function Weather({
-    city,
-}: {
-    city: string;
-}) {
-    const [weather, setWeather] = useState<any>(null);
-
+export function WeatherProvider({ children }: { children: React.ReactNode }) {
     const { addLog } = useLog();
+
+    const [weatherCity, setWeatherCity] = useState<string>(city);
+    const [weatherToday, setWeatherToday] = useState<Forecast[] | null>(null);
+    const [weatherForecast, setWeatherForecast] = useState<Forecast[] | null>(null);
 
     const fetchWeather = async () => {
         if (!openWeatherKey) return addLog('OpenWeather key missing');
@@ -23,22 +31,41 @@ export default function Weather({
             const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${openWeatherKey}&units=metric`);
             if (!res.ok) throw new Error(await res.text());
             const data = await res.json();
-            setWeather(data);
+            setWeatherToday(mapUpcomingWeather(data));
+            setWeatherForecast(groupedForecast(data));
             addLog('Weather loaded');
         } catch (e) {
             addLog('Weather error: ' + String(e));
         }
     };
 
+    const mapUpcomingWeather = (forecast: any, items = 5) => {
+        if (!forecast || !forecast.list) return [];
 
-    useEffect(() => {
-        fetchWeather();
-        const id = setInterval(() => {
-            fetchWeather();
-        }, pollingInterval);
-        return () => clearInterval(id);
-    }, []);
+        const list = forecast.list.slice(0, items).map((item: any) => {
+            const t = Number(item.main.temp);
+            const minTemp = Number(item.main.temp_min ?? t);
+            const maxTemp = Number(item.main.temp_max ?? t);
+            const pressure = Number(item.main.pressure ?? 0);
+            const humidity = Number(item.main.humidity ?? 0);
+            const wind = Number(item.wind?.speed ?? 0);
+            const desc = item.weather?.[0]?.description ?? '';
+            const icon = item.weather?.[0]?.icon ? `https://openweathermap.org/img/wn/${item.weather[0].icon}.png` : '';
+            return {
+                date: item.dt_txt.split(' ')[1],
+                minTemp,
+                maxTemp,
+                avgTemp: t,
+                pressure,
+                humidity,
+                wind,
+                desc,
+                icon,
+            };
+        });
 
+        return list;
+    };
 
     const groupedForecast = (forecast: any) => {
         if (!forecast || !forecast.list) return [];
@@ -79,20 +106,23 @@ export default function Weather({
         });
     };
 
+    useEffect(() => {
+        fetchWeather();
+        const id = setInterval(() => {
+            fetchWeather();
+        }, pollingInterval);
+        return () => clearInterval(id);
+    }, []);
+
     return (
-        <section className="col-span-1 bg-white p-4 rounded shadow">
-            <div>
-                {weather ? (
-                    <div>
-                        <div className="font-medium">{weather.city?.name ?? city}</div>
-                        <div className="mt-2 text-sm">
-                            <DailyForecast days={groupedForecast(weather)} />
-                        </div>
-                    </div>
-                ) : (
-                    <div className="text-xs text-gray-500">Weather not loaded</div>
-                )}
-            </div>
-        </section>
+        <WeatherContext.Provider value={{ refreshWeather: fetchWeather, weatherCity, weatherToday, weatherForecast }}>
+            {children}
+        </WeatherContext.Provider>
     );
+}
+
+export function useWeather() {
+    const ctx = useContext(WeatherContext);
+    if (!ctx) throw new Error("useWeather must be used within WeatherProvider");
+    return ctx;
 }

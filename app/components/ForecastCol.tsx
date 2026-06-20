@@ -1,22 +1,13 @@
 "use client";
 
-type Day = {
-    date: string;
-    minTemp: number;
-    maxTemp: number;
-    avgTemp: number;
-    pressure: number;
-    humidity: number;
-    wind: number;
-    desc: string;
-    icon: string;
-};
+import { Forecast } from "../types/forecast";
 
-export default function DailyForecast({ days }: { days: Day[] }) {
+export default function ForecastCol({ days }: { days: Forecast[] | null }) {
+    if (!days) return null;
     return (
-        <div className="space-y-1">
+        <div className="divide-y divide-gray-200">
             {days.map((d) => (
-                <div key={d.date} className="border rounded p-1 border-gray-200">
+                <div key={d.date} className="py-2">
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col items-center">
                             <img src={d.icon} alt={d.desc} className="w-15 h-15 m-[-10px]" />

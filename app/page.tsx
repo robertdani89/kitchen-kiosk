@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Sensors from './components/Sensors';
-import Weather from './components/Weather';
+import WeatherToday from './components/WeatherToday';
+import WeatherForecast from './components/WeatherForecast';
 import { LogProvider, useLog } from './context/LogContext';
+import { WeatherProvider } from "./context/WeatherContext";
 
 const address = process.env.NEXT_PUBLIC_WS_ADDRESS || "ws://192.168.0.139:8080/api";
 const weatherCity = process.env.NEXT_PUBLIC_WEATHER_CITY || "Budapest";
@@ -137,12 +139,13 @@ function HomeContent() {
 
     return (
         <div className="min-h-screen p-6 bg-gray-100 text-gray-900 font-sans">
-            <main className="max-w-6xl mx-auto grid grid-cols-3 gap-6">
+            <main className="max-w-6xl mx-auto grid grid-cols-5 gap-1">
                 <Sensors sensors={sensors} />
 
-                <Weather city={weatherCity} />
+                <WeatherToday city={weatherCity} />
+                <WeatherForecast city={weatherCity} />
 
-                <section className="col-span-1 bg-white p-4 rounded shadow">
+                <section className="col-span-1 bg-white p-1 rounded shadow">
                     <h2 className="font-semibold mb-2">Google</h2>
                     <div className="text-xs text-gray-600 mb-2">Paste an OAuth access token with Tasks & Calendar scopes.</div>
                     <input className="border p-2 w-full mb-2" value={googleToken} onChange={(e) => setGoogleToken(e.target.value)} placeholder="Google access token" />
@@ -194,7 +197,9 @@ function HomeContent() {
 export default function Home() {
     return (
         <LogProvider>
-            <HomeContent />
+            <WeatherProvider>
+                <HomeContent />
+            </WeatherProvider>
         </LogProvider>
     );
 }
