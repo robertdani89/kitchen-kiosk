@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLog } from '../context/LogContext';
+import DailyForecast from './DailyForecast';
 
 const openWeatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY || "";
 const pollingInterval = 10 * 60 * 1000; // 10 minutes
@@ -48,8 +49,33 @@ export default function Weather({
         }
         return Object.keys(byDay).slice(0, 5).map((date) => {
             const items = byDay[date];
+            let minTemp = Infinity, maxTemp = -Infinity, sumTemp = 0, sumPressure = 0, sumHum = 0, sumWind = 0;
+            for (const it of items) {
+                const t = Number(it.main.temp);
+                minTemp = Math.min(minTemp, Number(it.main.temp_min ?? t));
+                maxTemp = Math.max(maxTemp, Number(it.main.temp_max ?? t));
+                sumTemp += t;
+                sumPressure += Number(it.main.pressure ?? 0);
+                sumHum += Number(it.main.humidity ?? 0);
+                sumWind += Number(it.wind?.speed ?? 0);
+            }
+            const avgTemp = sumTemp / items.length;
+            const avgPressure = Math.round(sumPressure / items.length);
+            const avgHum = Math.round(sumHum / items.length);
+            const avgWind = sumWind / items.length;
             const mid = items[Math.floor(items.length / 2)];
-            return { date, temp: mid.main.temp.toFixed(1), desc: mid.weather[0].description };
+            const desc = mid.weather?.[0]?.description ?? '';
+            return {
+                date,
+                minTemp: Number(minTemp.toFixed(1)),
+                maxTemp: Number(maxTemp.toFixed(1)),
+                avgTemp: Number(avgTemp.toFixed(1)),
+                pressure: avgPressure,
+                humidity: avgHum,
+                wind: Number(avgWind.toFixed(1)),
+                desc,
+                icon: mid.weather?.[0]?.icon ? `https://openweathermap.org/img/wn/${mid.weather[0].icon}.png` : '',
+            };
         });
     };
 
@@ -59,13 +85,8 @@ export default function Weather({
                 {weather ? (
                     <div>
                         <div className="font-medium">{weather.city?.name ?? city}</div>
-                        <div className="mt-2 text-sm space-y-1">
-                            {groupedForecast(weather).map((d: any) => (
-                                <div key={d.date} className="flex justify-between">
-                                    <div>{d.date}</div>
-                                    <div className="text-right">{d.temp} °C — {d.desc}</div>
-                                </div>
-                            ))}
+                        <div className="mt-2 text-sm">
+                            <DailyForecast days={groupedForecast(weather)} />
                         </div>
                     </div>
                 ) : (
