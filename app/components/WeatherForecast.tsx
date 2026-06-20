@@ -12,7 +12,7 @@ export default function WeatherForecast({
     const { weatherForecast, weatherCity } = useWeather();
 
     return (
-        <section className="col-span-1 bg-white p-2 rounded shadow">
+        <section className="col-span-1 bg-white p-1 rounded shadow">
             <div>
                 {weatherForecast ? (
                     <div>

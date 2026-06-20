@@ -7,6 +7,7 @@ import WeatherForecast from './components/WeatherForecast';
 import { LogProvider, useLog } from './context/LogContext';
 import { WeatherProvider } from "./context/WeatherContext";
 import Calendar from "./components/Calendar";
+import Tasks from "./components/Tasks";
 
 const address = process.env.NEXT_PUBLIC_WS_ADDRESS || "ws://192.168.0.139:8080/api";
 const weatherCity = process.env.NEXT_PUBLIC_WEATHER_CITY || "Budapest";
@@ -142,11 +143,10 @@ function HomeContent() {
         <div className="min-h-screen p-6 bg-gray-100 text-gray-900 font-sans">
             <main className="max-w-6xl mx-auto grid grid-cols-5 gap-1">
                 <Sensors sensors={sensors} />
-
                 <WeatherToday city={weatherCity} />
                 <WeatherForecast city={weatherCity} />
-                <Calendar></Calendar>
-
+                <Calendar />
+                <Tasks />
             </main>
 
             {/* <footer className="max-w-6xl mx-auto mt-6">

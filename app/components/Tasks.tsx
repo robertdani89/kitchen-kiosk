@@ -2,17 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
-const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-
-export default function Calendar() {
+export default function Tasks() {
     const [token, setToken] = useState<string>(() => typeof window !== 'undefined' ? (localStorage.getItem('google_token') || '') : '');
-    const [events, setEvents] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (token) {
             localStorage.setItem('google_token', token);
-            fetchEvents(token);
+            fetchTasks(token);
         }
     }, [token]);
 
@@ -31,18 +29,17 @@ export default function Calendar() {
                 }
             }
         }
-        if (token) fetchEvents(token);
+        if (token) fetchTasks(token);
     }, []);
 
     const handleAuthorize = () => {
         window.open('/api/auth/google/start', '_blank');
     };
 
-    const fetchEvents = async (accessToken: string) => {
+    const fetchTasks = async (accessToken: string) => {
         setLoading(true);
         try {
-            const now = new Date().toISOString();
-            const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=5&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(now)}`, {
+            const res = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false&maxResults=20', {
                 headers: { Authorization: `Bearer ${accessToken}` }
             });
             if (!res.ok) {
@@ -50,27 +47,22 @@ export default function Calendar() {
                 throw new Error(txt || res.statusText);
             }
             const data = await res.json();
-            setEvents(data.items || []);
+            const items = data.items?.filter((t: any) => !t.completed) ?? [];
+            items.sort((a: any, b: any) => (a.position || '').localeCompare(b.position || ''));
+            setTasks(items);
         } catch (e) {
-            console.error('Calendar fetch error', e);
-            setEvents([]);
-            alert('Failed to load calendar events. Check token permissions or re-authorize.');
+            console.error('Tasks fetch error', e);
+            setTasks([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const saveTokenFromInput = (val: string) => {
-        setToken(val.trim());
-    };
-
     const pad = (n: number) => n.toString().padStart(2, '0');
     const formatDate = (iso?: string) => {
         if (!iso) return '';
-        // handle date-only strings like '2026-06-20'
         let dt = new Date(iso);
         if (isNaN(dt.getTime())) {
-            // try adding time
             dt = new Date(iso + 'T00:00:00');
         }
         if (isNaN(dt.getTime())) return iso;
@@ -79,30 +71,28 @@ export default function Calendar() {
 
     return (
         <section className="col-span-1 bg-white p-1 rounded shadow">
-            <h2 className="mb-2">Következő események</h2>
+            <h2 className="mb-2">Teendők</h2>
             {!token ? (
                 <div>
-                    <div className="text-xs text-gray-600 mb-2">To display your upcoming events, authorize this app to access your Google Calendar.</div>
+                    <div className="text-xs text-gray-600 mb-2">Authorize to view your unfinished tasks.</div>
                     <div className="flex gap-2 mb-3">
                         <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={handleAuthorize}>Authorize Google</button>
                     </div>
-                    <div className="text-xs text-gray-500 mb-2">If you completed OAuth and received an access token, paste it here:</div>
+                    <div className="text-xs text-gray-500 mb-2">Or paste an access token:</div>
                     <div className="flex gap-2">
                         <input className="border p-2 flex-1" placeholder="Paste access token" onChange={(e) => setToken(e.target.value)} />
-                        <button className="px-3 py-1 bg-green-600 text-white rounded" onClick={() => saveTokenFromInput((document.querySelector('input[placeholder="Paste access token"]') as HTMLInputElement).value)}>Save</button>
                     </div>
-                    <div className="mt-2 text-xs text-gray-500">Note: set the OAuth redirect URI in Google Cloud to <strong>/api/auth/google/callback</strong> on your domain.</div>
                 </div>
             ) : (
                 <div>
                     <div className="space-y-2">
                         {loading && <div className="text-xs text-gray-500">Loading...</div>}
-                        {!loading && events.length === 0 && <div className="text-xs text-gray-500">No upcoming events</div>}
-                        {events.map((ev: any, i: number) => (
-                            <div key={i} className="rounded p-1">
-                                <div className="font-medium">{ev.summary || '(no title)'}</div>
-                                <div className="text-xs text-gray-600">{formatDate(ev.start?.dateTime ?? ev.start?.date)}</div>
-                                {ev.location && <div className="text-xs text-gray-600">📍 {ev.location}</div>}
+                        {!loading && tasks.length === 0 && <div className="text-xs text-gray-500">No unfinished tasks</div>}
+                        {tasks.map((t: any, i: number) => (
+                            <div key={i} className="p-2">
+                                <div className="font-medium">{t.title}</div>
+                                {t.due && <div className="text-xs text-gray-600">Due: {formatDate(t.due)}</div>}
+                                {t.notes && <div className="text-xs text-gray-600">{t.notes}</div>}
                             </div>
                         ))}
                     </div>
