@@ -1,37 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Sensors from './components/Sensors';
+import Weather from './components/Weather';
+import { LogProvider, useLog } from './context/LogContext';
 
 const address = process.env.NEXT_PUBLIC_WS_ADDRESS || "ws://192.168.0.139:8080/api";
 const weatherCity = process.env.NEXT_PUBLIC_WEATHER_CITY || "Budapest";
-const openWeatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY || "";
 
-const pollingInterval = 10 * 60 * 1000; // 10 minutes
-
-export default function Home() {
+function HomeContent() {
+    const { addLog, logs } = useLog();
     const [connected, setConnected] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
-    const [logs, setLogs] = useState<string[]>([]);
 
     const [googleToken, setGoogleToken] = useState(process.env.NEXT_PUBLIC_GOOGLE_TOKEN || "");
 
     const [sensors, setSensors] = useState(() => [
-        { id: 1, name: 'Living room', topic: 'Living room temp', temperature: null as number | null, humidity: null as number | null, last_seen: '' },
-        // { id: 2, name: 'Kitchen', topic: 'Kitchen temp', temperature: null as number | null, humidity: null as number | null, last_seen: '' },
-        { id: 3, name: 'Bedroom', topic: 'Bedroom temp', temperature: null as number | null, humidity: null as number | null, last_seen: '' },
-        // { id: 4, name: 'Hall', topic: 'Hall temp', temperature: null as number | null, humidity: null as number | null, last_seen: '' },
-        // { id: 5, name: 'Garage', topic: 'Garage temp', temperature: null as number | null, humidity: null as number | null, last_seen: '' },
+        { id: 1, name: 'Living room', topic: 'Living room temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🛋️' },
+        // { id: 2, name: 'Kitchen', topic: 'Kitchen temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🍳' },
+        { id: 3, name: 'Bedroom', topic: 'Bedroom temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🛏️' },
+        // { id: 4, name: 'Hall', topic: 'Hall temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🚪' },
+        // { id: 5, name: 'Garage', topic: 'Garage temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🚗' },
     ]);
 
-    const [weather, setWeather] = useState<any>(null);
     const [tasks, setTasks] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
-
-    const addLog = (msg: string) => {
-        console.log(msg);
-        setLogs((s) => [new Date().toLocaleTimeString() + " — " + msg, ...s]);
-    }
-
 
     const connect = () => {
         addLog(`Connecting to ${address} (raw WebSocket)`);
@@ -108,19 +101,6 @@ export default function Home() {
         }));
     };
 
-    const fetchWeather = async () => {
-        if (!openWeatherKey) return addLog('OpenWeather key missing');
-        try {
-            const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(weatherCity)}&appid=${openWeatherKey}&units=metric`);
-            if (!res.ok) throw new Error(await res.text());
-            const data = await res.json();
-            setWeather(data);
-            addLog('Weather loaded');
-        } catch (e) {
-            addLog('Weather error: ' + String(e));
-        }
-    };
-
     const fetchGoogleTasksAndEvents = async () => {
         if (!googleToken) return addLog('Google token missing');
         try {
@@ -147,19 +127,6 @@ export default function Home() {
         }
     };
 
-    const groupedForecast = (forecast: any) => {
-        if (!forecast || !forecast.list) return [];
-        const byDay: Record<string, any[]> = {};
-        for (const item of forecast.list) {
-            const d = item.dt_txt.split(' ')[0];
-            (byDay[d] ||= []).push(item);
-        }
-        return Object.keys(byDay).slice(0, 5).map((date) => {
-            const items = byDay[date];
-            const mid = items[Math.floor(items.length / 2)];
-            return { date, temp: mid.main.temp.toFixed(1), desc: mid.weather[0].description };
-        });
-    };
 
     useEffect(() => {
         connect();
@@ -168,53 +135,12 @@ export default function Home() {
         };
     }, []);
 
-    useEffect(() => {
-        fetchWeather();
-        const id = setInterval(() => {
-            fetchWeather();
-        }, pollingInterval);
-        return () => clearInterval(id);
-    }, []);
-
     return (
         <div className="min-h-screen p-6 bg-gray-100 text-gray-900 font-sans">
             <main className="max-w-6xl mx-auto grid grid-cols-3 gap-6">
-                <section className="col-span-1 bg-white p-4 rounded shadow">
-                    <h2 className="font-semibold mb-2">Sensors</h2>
-                    <div className="space-y-3">
-                        {sensors.map((s) => (
-                            <div key={s.id} className="border rounded p-3">
-                                <div className="flex justify-between">
-                                    <div className="font-medium">{s.name}</div>
-                                    <div className="text-xs text-gray-500">{s.topic}</div>
-                                </div>
-                                <div className="mt-2 text-2xl">{s.temperature != null ? `${s.temperature.toFixed(1)} °C` : '—'}</div>
-                                <div className="text-sm">Humidity: {s.humidity != null ? `${s.humidity.toFixed(1)} %` : '—'}</div>
-                                <div className="text-xs text-gray-500 mt-1">{s.last_seen ? new Date(s.last_seen).toLocaleString() : ''}</div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                <Sensors sensors={sensors} />
 
-                <section className="col-span-1 bg-white p-4 rounded shadow">
-                    <div>
-                        {weather ? (
-                            <div>
-                                <h2 className="font-medium">{weather.city?.name} weather forecast</h2>
-                                <div className="mt-2 text-sm space-y-1">
-                                    {groupedForecast(weather).map((d: any) => (
-                                        <div key={d.date} className="flex justify-between">
-                                            <div>{d.date}</div>
-                                            <div className="text-right">{d.temp} °C — {d.desc}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-xs text-gray-500">Weather not loaded</div>
-                        )}
-                    </div>
-                </section>
+                <Weather city={weatherCity} />
 
                 <section className="col-span-1 bg-white p-4 rounded shadow">
                     <h2 className="font-semibold mb-2">Google</h2>
@@ -262,5 +188,13 @@ export default function Home() {
                 </div>
             </footer> */}
         </div>
+    );
+}
+
+export default function Home() {
+    return (
+        <LogProvider>
+            <HomeContent />
+        </LogProvider>
     );
 }
