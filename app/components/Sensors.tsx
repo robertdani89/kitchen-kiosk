@@ -21,7 +21,7 @@ export default function Sensors({
 }) {
     return (
         <section className="col-span-1 bg-white p-2 rounded shadow">
-            <h2 className="font-semibold mb-2">Szenzorok</h2>
+            <h2 className="mb-2">Szenzorok</h2>
             <div className="space-y-1">
                 {sensors.map((s) => (
                     <div key={s.id} className="border rounded p-1 border-gray-200 bg-gray-50">

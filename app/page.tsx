@@ -6,6 +6,7 @@ import WeatherToday from './components/WeatherToday';
 import WeatherForecast from './components/WeatherForecast';
 import { LogProvider, useLog } from './context/LogContext';
 import { WeatherProvider } from "./context/WeatherContext";
+import Calendar from "./components/Calendar";
 
 const address = process.env.NEXT_PUBLIC_WS_ADDRESS || "ws://192.168.0.139:8080/api";
 const weatherCity = process.env.NEXT_PUBLIC_WEATHER_CITY || "Budapest";
@@ -144,39 +145,8 @@ function HomeContent() {
 
                 <WeatherToday city={weatherCity} />
                 <WeatherForecast city={weatherCity} />
+                <Calendar></Calendar>
 
-                <section className="col-span-1 bg-white p-1 rounded shadow">
-                    <h2 className="font-semibold mb-2">Google</h2>
-                    <div className="text-xs text-gray-600 mb-2">Paste an OAuth access token with Tasks & Calendar scopes.</div>
-                    <input className="border p-2 w-full mb-2" value={googleToken} onChange={(e) => setGoogleToken(e.target.value)} placeholder="Google access token" />
-                    <div className="flex gap-2 mb-3">
-                        <button className="px-3 py-1 bg-red-600 text-white rounded" onClick={fetchGoogleTasksAndEvents}>Refresh Google</button>
-                    </div>
-
-                    <div className="mb-3">
-                        <div className="font-medium">Upcoming events</div>
-                        <div className="text-sm mt-1 space-y-1">
-                            {events.length ? events.map((ev, i) => (
-                                <div key={i} className="border p-2 rounded">
-                                    <div className="font-medium">{ev.summary}</div>
-                                    <div className="text-xs text-gray-600">{ev.start?.dateTime ?? ev.start?.date}</div>
-                                </div>
-                            )) : <div className="text-xs text-gray-500">No events</div>}
-                        </div>
-                    </div>
-
-                    <div>
-                        <div className="font-medium">Tasks</div>
-                        <div className="text-sm mt-1 space-y-1">
-                            {tasks.length ? tasks.map((t, i) => (
-                                <div key={i} className="border p-2 rounded">
-                                    <div>{t.title}</div>
-                                    <div className="text-xs text-gray-600">{t.notes}</div>
-                                </div>
-                            )) : <div className="text-xs text-gray-500">No tasks</div>}
-                        </div>
-                    </div>
-                </section>
             </main>
 
             {/* <footer className="max-w-6xl mx-auto mt-6">

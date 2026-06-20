@@ -16,7 +16,7 @@ export default function WeatherToday({
             <div>
                 {weatherToday ? (
                     <div>
-                        <div className="font-medium">{weatherCity ?? city} mai időjárás</div>
+                        <h2 className="mb-2">{weatherCity ?? city} mai időjárás</h2>
                         <div className="mt-2 text-sm">
                             <ForecastCol days={weatherToday} />
                         </div>

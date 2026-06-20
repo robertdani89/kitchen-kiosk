@@ -16,7 +16,7 @@ export default function WeatherForecast({
             <div>
                 {weatherForecast ? (
                     <div>
-                        <div className="font-medium">{weatherCity ?? city} előrejelzés</div>
+                        <h2 className="mb-2">{weatherCity ?? city} előrejelzés</h2>
                         <div className="mt-2 text-sm">
                             <ForecastCol days={weatherForecast} />
                         </div>
