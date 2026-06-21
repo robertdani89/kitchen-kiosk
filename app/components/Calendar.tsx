@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-
 export default function Calendar() {
     const [token, setToken] = useState<string>(() => typeof window !== 'undefined' ? (localStorage.getItem('google_token') || '') : '');
     const [events, setEvents] = useState<any[]>([]);
@@ -42,7 +40,7 @@ export default function Calendar() {
         setLoading(true);
         try {
             const now = new Date().toISOString();
-            const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=5&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(now)}`, {
+            const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=4&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(now)}`, {
                 headers: { Authorization: `Bearer ${accessToken}` }
             });
             if (!res.ok) {
@@ -54,7 +52,6 @@ export default function Calendar() {
         } catch (e) {
             console.error('Calendar fetch error', e);
             setEvents([]);
-            alert('Failed to load calendar events. Check token permissions or re-authorize.');
         } finally {
             setLoading(false);
         }
@@ -67,10 +64,8 @@ export default function Calendar() {
     const pad = (n: number) => n.toString().padStart(2, '0');
     const formatDate = (iso?: string) => {
         if (!iso) return '';
-        // handle date-only strings like '2026-06-20'
         let dt = new Date(iso);
         if (isNaN(dt.getTime())) {
-            // try adding time
             dt = new Date(iso + 'T00:00:00');
         }
         if (isNaN(dt.getTime())) return iso;
@@ -94,11 +89,11 @@ export default function Calendar() {
                 </div>
             ) : (
                 <div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         {loading && <div className="text-xs text-gray-500">Loading...</div>}
                         {!loading && events.length === 0 && <div className="text-xs text-gray-500">No upcoming events</div>}
                         {events.map((ev: any, i: number) => (
-                            <div key={i} className="rounded p-1">
+                            <div key={i} className="bg-gray-100 border border-gray-200 rounded p-1">
                                 <div className="font-medium">{ev.summary || '(no title)'}</div>
                                 <div className="text-xs text-gray-600">{formatDate(ev.start?.dateTime ?? ev.start?.date)}</div>
                                 {ev.location && <div className="text-xs text-gray-600">📍 {ev.location}</div>}

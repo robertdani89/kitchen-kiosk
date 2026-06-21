@@ -89,7 +89,7 @@ export default function Tasks() {
                         {loading && <div className="text-xs text-gray-500">Loading...</div>}
                         {!loading && tasks.length === 0 && <div className="text-xs text-gray-500">No unfinished tasks</div>}
                         {tasks.map((t: any, i: number) => (
-                            <div key={i} className="p-2">
+                            <div key={i} className="p-0 border-b border-gray-200 last:border-b-0">
                                 <div className="font-medium">{t.title}</div>
                                 {t.due && <div className="text-xs text-gray-600">Due: {formatDate(t.due)}</div>}
                                 {t.notes && <div className="text-xs text-gray-600">{t.notes}</div>}

@@ -20,7 +20,7 @@ export default function Sensors({
     onClear?: () => void;
 }) {
     return (
-        <section className="col-span-1 bg-white p-1 rounded shadow">
+        <section className="h-full w-full bg-white p-1 rounded shadow">
             <h2 className="mb-2">Szenzorok</h2>
             <div className="space-y-1">
                 {sensors.map((s) => (

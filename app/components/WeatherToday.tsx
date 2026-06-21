@@ -18,7 +18,7 @@ export default function WeatherToday({
                         <h2 className="mb-2">{weatherCity ?? city} mai időjárás</h2>
                         <div className="text-sm">
                             <picture>
-                                <svg className="w-full h-full" viewBox="-10 -10 400 185" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Today's temperature chart">
+                                <svg className="w-full h-full" viewBox="-10 -10 400 184" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Today's temperature chart">
                                     {(() => {
                                         const data = weatherToday || [];
                                         const w = 380;

@@ -8,6 +8,7 @@ import { LogProvider, useLog } from './context/LogContext';
 import { WeatherProvider } from "./context/WeatherContext";
 import Calendar from "./components/Calendar";
 import Tasks from "./components/Tasks";
+import Photos from "./components/Photos";
 
 const address = process.env.NEXT_PUBLIC_WS_ADDRESS || "ws://192.168.0.139:8080/api";
 const weatherCity = process.env.NEXT_PUBLIC_WEATHER_CITY || "Budapest";
@@ -142,13 +143,22 @@ function HomeContent() {
     return (
         <div className="h-[100vh] w-[100vw] p-1 bg-gray-100 text-gray-900 font-sans">
             <main className="mx-auto h-full grid grid-cols-5 grid-rows-2 gap-1">
-                <div className="col-span-2">
+                <div className="row-start-1 col-span-2">
                     <WeatherToday city={weatherCity} />
                 </div>
-                <Sensors sensors={sensors} />
-                <WeatherForecast className="col-span-2" city={weatherCity} />
-                {/* <Calendar /> */}
-                {/* <Tasks /> */}
+                <div className="row-start-2 col-span-2">
+                    <WeatherForecast city={weatherCity} />
+                </div>
+                <div className="row-start-1 row-span-2">
+                    <Sensors sensors={sensors} />
+                </div>
+
+                <Calendar />
+                <Tasks />
+
+                <div className="row-start-2 col-span-2">
+                    <Photos />
+                </div>
                 {/* 
                 <div className="col-span-5 mt-2">
                     <div className="bg-white p-3 rounded shadow">
