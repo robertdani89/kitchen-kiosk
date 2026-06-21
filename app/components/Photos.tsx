@@ -67,7 +67,7 @@ export default function Photos() {
 
     return (
         <section className="col-span-1 bg-white p-1 rounded shadow h-full flex flex-col">
-            <div className="flex-1 bg-gray-50 rounded overflow-hidden flex items-center justify-center">
+            <div className="flex-1 rounded overflow-hidden flex items-center justify-center">
                 {loading && <div className="text-xs text-gray-500">Loading...</div>}
                 {!loading && !imgSrc && <div className="text-xs text-gray-500">No photos available or not logged in</div>}
                 {imgSrc && (

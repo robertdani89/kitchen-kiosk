@@ -22,7 +22,7 @@ export default function Sensors({
     return (
         <section className="h-full w-full bg-white p-1 rounded shadow">
             <h2 className="mb-2">Szenzorok</h2>
-            <div className="flex">
+            <div className="flex gap-1 flex-wrap">
                 {sensors.map((s) => (
                     <div key={s.id} className="border rounded p-1 border-gray-200 bg-gray-50">
                         <div className="font-medium">{s.icon} {s.name} </div>

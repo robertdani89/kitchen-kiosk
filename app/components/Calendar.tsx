@@ -75,7 +75,7 @@ export default function Calendar() {
                         {loading && <div className="text-xs text-gray-500">Loading...</div>}
                         {!loading && events.length === 0 && <div className="text-xs text-gray-500">No upcoming events</div>}
                         {events.map((ev: any, i: number) => (
-                            <div key={i} className="bg-gray-100 border border-gray-200 rounded p-1">
+                            <div key={i} className="bg-gray-50 border border-gray-200 rounded p-1">
                                 <div className="font-medium">{ev.summary || '(no title)'}</div>
                                 <div className="text-xs text-gray-600">{formatDate(ev.start?.dateTime ?? ev.start?.date)}</div>
                                 {ev.location && <div className="text-xs text-gray-600">📍 {ev.location}</div>}
