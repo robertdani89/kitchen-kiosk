@@ -1,52 +1,30 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useGoogleAuth } from '../context/GoogleAuthContext';
+import { useLog } from '../context/LogContext';
 
 export default function Tasks() {
-    const [token, setToken] = useState<string>(() => typeof window !== 'undefined' ? (localStorage.getItem('google_token') || '') : '');
+    const { googleToken, fetchWithAuth } = useGoogleAuth();
     const [tasks, setTasks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (token) {
-            localStorage.setItem('google_token', token);
-            fetchTasks(token);
-        }
-    }, [token]);
+    const { addLog } = useLog();
 
     useEffect(() => {
-        if (!token) {
-            const fromStorage = typeof window !== 'undefined' ? localStorage.getItem('google_token') : '';
-            if (fromStorage) {
-                setToken(fromStorage);
-                return;
-            }
-            if (typeof document !== 'undefined') {
-                const m = document.cookie.match(/(?:^|; )google_token=([^;]+)/);
-                if (m) {
-                    setToken(decodeURIComponent(m[1]));
-                    return;
-                }
-            }
+        if (googleToken) {
+            loadTasks();
         }
-        if (token) fetchTasks(token);
-    }, []);
+    }, [googleToken]);
 
     const handleAuthorize = () => {
         window.open('/api/auth/google/start', '_blank');
     };
 
-    const fetchTasks = async (accessToken: string) => {
+    const loadTasks = async () => {
         setLoading(true);
         try {
-            const res = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false&maxResults=20', {
-                headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || res.statusText);
-            }
-            const data = await res.json();
+            const data = await fetchTasks();
             const items = data.items?.filter((t: any) => !t.completed) ?? [];
             items.sort((a: any, b: any) => (a.position || '').localeCompare(b.position || ''));
             setTasks(items);
@@ -69,18 +47,25 @@ export default function Tasks() {
         return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
     };
 
+    const fetchTasks = async () => {
+        try {
+            const res = await fetchWithAuth('https://www.googleapis.com/tasks/v1/lists/@default/tasks');
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        } catch (e) {
+            addLog('Google tasks fetch error: ' + String(e));
+            throw e;
+        }
+    };
+
     return (
         <section className="col-span-1 bg-white p-1 rounded shadow">
             <h2 className="mb-2">Teendők</h2>
-            {!token ? (
+            {!googleToken ? (
                 <div>
                     <div className="text-xs text-gray-600 mb-2">Authorize to view your unfinished tasks.</div>
                     <div className="flex gap-2 mb-3">
                         <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={handleAuthorize}>Authorize Google</button>
-                    </div>
-                    <div className="text-xs text-gray-500 mb-2">Or paste an access token:</div>
-                    <div className="flex gap-2">
-                        <input className="border p-2 flex-1" placeholder="Paste access token" onChange={(e) => setToken(e.target.value)} />
                     </div>
                 </div>
             ) : (

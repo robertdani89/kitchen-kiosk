@@ -6,6 +6,7 @@ import WeatherToday from './components/WeatherToday';
 import WeatherForecast from './components/WeatherForecast';
 import { LogProvider, useLog } from './context/LogContext';
 import { WeatherProvider } from "./context/WeatherContext";
+import { GoogleProvider } from './context/GoogleAuthContext';
 import Calendar from "./components/Calendar";
 import Tasks from "./components/Tasks";
 import Photos from "./components/Photos";
@@ -18,7 +19,7 @@ function HomeContent() {
     const [connected, setConnected] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
 
-    const [googleToken, setGoogleToken] = useState(process.env.NEXT_PUBLIC_GOOGLE_TOKEN || "");
+    // Google auth moved to its own context provider
 
     const [sensors, setSensors] = useState(() => [
         { id: 1, name: 'Living room', topic: 'Living room temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🛋️' },
@@ -106,31 +107,7 @@ function HomeContent() {
         }));
     };
 
-    const fetchGoogleTasksAndEvents = async () => {
-        if (!googleToken) return addLog('Google token missing');
-        try {
-            const tRes = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks', { headers: { Authorization: `Bearer ${googleToken}` } });
-            if (tRes.ok) {
-                const tJson = await tRes.json();
-                setTasks(tJson.items ?? []);
-                addLog('Google Tasks loaded');
-            } else {
-                addLog('Tasks error: ' + (await tRes.text()));
-            }
-
-            const nowIso = new Date().toISOString();
-            const cRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=10&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(nowIso)}`, { headers: { Authorization: `Bearer ${googleToken}` } });
-            if (cRes.ok) {
-                const cJson = await cRes.json();
-                setEvents(cJson.items ?? []);
-                addLog('Calendar events loaded');
-            } else {
-                addLog('Calendar error: ' + (await cRes.text()));
-            }
-        } catch (e) {
-            addLog('Google fetch error: ' + String(e));
-        }
-    };
+    // Google fetch functions are now provided by `useGoogleAuth()`
 
 
     useEffect(() => {
@@ -180,7 +157,9 @@ export default function Home() {
     return (
         <LogProvider>
             <WeatherProvider>
-                <HomeContent />
+                <GoogleProvider>
+                    <HomeContent />
+                </GoogleProvider>
             </WeatherProvider>
         </LogProvider>
     );
