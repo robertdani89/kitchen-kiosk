@@ -39,7 +39,7 @@ export function WeatherProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const mapUpcomingWeather = (forecast: any, items = 5) => {
+    const mapUpcomingWeather = (forecast: any, items = 8) => {
         if (!forecast || !forecast.list) return [];
 
         const list = forecast.list.slice(0, items).map((item: any) => {

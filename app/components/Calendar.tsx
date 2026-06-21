@@ -91,7 +91,6 @@ export default function Calendar() {
                         <input className="border p-2 flex-1" placeholder="Paste access token" onChange={(e) => setToken(e.target.value)} />
                         <button className="px-3 py-1 bg-green-600 text-white rounded" onClick={() => saveTokenFromInput((document.querySelector('input[placeholder="Paste access token"]') as HTMLInputElement).value)}>Save</button>
                     </div>
-                    <div className="mt-2 text-xs text-gray-500">Note: set the OAuth redirect URI in Google Cloud to <strong>/api/auth/google/callback</strong> on your domain.</div>
                 </div>
             ) : (
                 <div>

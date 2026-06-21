@@ -140,26 +140,28 @@ function HomeContent() {
     }, []);
 
     return (
-        <div className="min-h-screen p-6 bg-gray-100 text-gray-900 font-sans">
-            <main className="max-w-6xl mx-auto grid grid-cols-5 gap-1">
-                <Sensors sensors={sensors} />
-                <WeatherToday city={weatherCity} />
-                <WeatherForecast city={weatherCity} />
-                <Calendar />
-                <Tasks />
-            </main>
-
-            {/* <footer className="max-w-6xl mx-auto mt-6">
-                <div className="bg-white p-3 rounded shadow">
-                    <div className="flex justify-between items-center mb-2">
-                        <div className="text-sm">Connection: {connected ? 'Connected' : 'Disconnected'}</div>
-                        <div className="text-xs text-gray-600">WebSocket: {address}</div>
-                    </div>
-                    <div className="max-h-40 overflow-auto border p-2 bg-gray-50">
-                        {logs.map((l, i) => <div key={i} className="text-xs">{l}</div>)}
-                    </div>
+        <div className="h-[100vh] w-[100vw] p-1 bg-gray-100 text-gray-900 font-sans">
+            <main className="mx-auto h-full grid grid-cols-5 grid-rows-2 gap-1">
+                <div className="col-span-2">
+                    <WeatherToday city={weatherCity} />
                 </div>
-            </footer> */}
+                <Sensors sensors={sensors} />
+                <WeatherForecast className="col-span-2" city={weatherCity} />
+                {/* <Calendar /> */}
+                {/* <Tasks /> */}
+                {/* 
+                <div className="col-span-5 mt-2">
+                    <div className="bg-white p-3 rounded shadow">
+                        <div className="flex justify-between items-center mb-2">
+                            <div className="text-sm">Connection: {connected ? 'Connected' : 'Disconnected'}</div>
+                            <div className="text-xs text-gray-600">WebSocket: {address}</div>
+                        </div>
+                        <div className="max-h-40 overflow-auto border p-2 bg-gray-50">
+                            {logs.map((l, i) => <div key={i} className="text-xs">{l}</div>)}
+                        </div>
+                    </div>
+                </div> */}
+            </main>
         </div>
     );
 }
