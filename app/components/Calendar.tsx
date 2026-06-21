@@ -34,8 +34,11 @@ export default function Calendar() {
 
     const fetchEvents = async () => {
         try {
-            const nowIso = new Date().toISOString();
-            const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=10&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(nowIso)}`;
+            const now = new Date();
+            const nowIso = now.toISOString();
+            const maxDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
+            const timeMaxIso = maxDate.toISOString();
+            const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=4&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(nowIso)}&timeMax=${encodeURIComponent(timeMaxIso)}`;
             const res = await fetchWithAuth(url);
             if (!res.ok) throw new Error(await res.text());
             return res.json();
@@ -57,7 +60,7 @@ export default function Calendar() {
     };
 
     return (
-        <section className="col-span-1 bg-white p-1 rounded shadow">
+        <section className="col-span-1 bg-white p-1 rounded shadow overflow-y-hidden">
             <h2 className="mb-2">Következő események</h2>
             {!googleToken ? (
                 <div>

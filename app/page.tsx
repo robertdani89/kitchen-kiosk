@@ -119,21 +119,21 @@ function HomeContent() {
 
     return (
         <div className="h-[100vh] w-[100vw] p-1 bg-gray-100 text-gray-900 font-sans">
-            <main className="mx-auto h-full grid grid-cols-5 grid-rows-2 gap-1">
+            <main className="mx-auto h-full grid grid-cols-5 grid-rows-3 gap-1">
                 <div className="row-start-1 col-span-2">
                     <WeatherToday city={weatherCity} />
                 </div>
                 <div className="row-start-2 col-span-2">
                     <WeatherForecast city={weatherCity} />
                 </div>
-                <div className="row-start-1 row-span-2">
+                <div className="row-start-3 col-start-1 col-span-2">
                     <Sensors sensors={sensors} />
                 </div>
 
                 <Calendar />
                 <Tasks />
 
-                <div className="row-start-2 col-span-2">
+                <div className="row-start-2 col-span-3 row-span-2">
                     <Photos />
                 </div>
                 {/* 

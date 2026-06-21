@@ -15,7 +15,7 @@ export async function GET(request: Request) {
         const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
         if (!clientId) return NextResponse.json({ error: 'Missing GOOGLE_CLIENT_ID' }, { status: 500 });
 
-        const scope = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/tasks.readonly';
+        const scope = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/drive.readonly';
         const params = new URLSearchParams({
             client_id: clientId,
             redirect_uri: redirect,
