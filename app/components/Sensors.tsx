@@ -22,10 +22,10 @@ export default function Sensors({
     return (
         <section className="h-full w-full bg-white p-1 rounded shadow">
             <h2 className="mb-2">Szenzorok</h2>
-            <div className="flex gap-1 flex-wrap">
+            <div className="grid grid-cols-4 grid-rows-2 gap-1">
                 {sensors.map((s) => (
                     <div key={s.id} className="border rounded p-1 border-gray-200 bg-gray-50">
-                        <div className="font-medium">{s.icon} {s.name} </div>
+                        <div>{s.icon} {s.name} </div>
                         <div className="text-sm">🌡️{s.temperature != null ? `${s.temperature.toFixed(1)} °C` : '—'}</div>
                         <div className="text-sm">💦{s.humidity != null ? `${s.humidity.toFixed(1)} %` : '—'}</div>
                     </div>

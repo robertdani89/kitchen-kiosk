@@ -23,15 +23,12 @@ function HomeContent() {
     // Google auth moved to its own context provider
 
     const [sensors, setSensors] = useState(() => [
-        { id: 1, name: 'Living room', topic: 'Living room temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🛋️' },
-        // { id: 2, name: 'Kitchen', topic: 'Kitchen temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🍳' },
+        { id: 1, name: 'Outside', topic: 'Outside temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🌳' },
+        { id: 2, name: 'Living room', topic: 'Living room temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🛋️' },
         { id: 3, name: 'Bedroom', topic: 'Bedroom temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🛏️' },
         // { id: 4, name: 'Hall', topic: 'Hall temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🚪' },
         // { id: 5, name: 'Garage', topic: 'Garage temp', temperature: null as number | null, humidity: null as number | null, last_seen: '', icon: '🚗' },
     ]);
-
-    const [tasks, setTasks] = useState<any[]>([]);
-    const [events, setEvents] = useState<any[]>([]);
 
     const connect = () => {
         addLog(`Connecting to ${address} (raw WebSocket)`);
