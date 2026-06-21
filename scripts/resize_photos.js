@@ -3,8 +3,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const sharp = require('sharp');
 
-const WIDTH = 754;
-const HEIGHT = 465;
+const WIDTH = 1130;
+const HEIGHT = 698;
 
 function usage() {
     console.log('Usage: node scripts/resize_photos.js <source_dir> <dest_dir>');

@@ -1,27 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getVerifier, deleteVerifier } from '../pkceStore';
 
 export const dynamic = 'force-dynamic';
-
-function parseCookies(cookieHeader: string | null) {
-    const map: Record<string, string> = {};
-    if (!cookieHeader) return map;
-    const parts = cookieHeader.split(';').map(p => p.trim());
-    for (const p of parts) {
-        const [k, ...rest] = p.split('=');
-        map[k] = rest.join('=');
-    }
-    return map;
-}
 
 export async function GET(request: Request) {
     try {
         const url = new URL(request.url);
         const code = url.searchParams.get('code');
+        const state = url.searchParams.get('state');
         if (!code) return NextResponse.json({ error: 'Missing code' }, { status: 400 });
+        if (!state) return NextResponse.json({ error: 'Missing state' }, { status: 400 });
 
-        const cookies = parseCookies(request.headers.get('cookie'));
-        const verifier = cookies['pkce_verifier'];
-        if (!verifier) return NextResponse.json({ error: 'Missing PKCE verifier cookie' }, { status: 400 });
+        const verifier = getVerifier(state);
+        if (!verifier) return NextResponse.json({ error: 'Missing PKCE verifier (state expired or invalid)' }, { status: 400 });
 
         const origin = url.origin;
         const redirect = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT || `${origin}/api/auth/google/callback`;
@@ -45,12 +36,13 @@ export async function GET(request: Request) {
         const accessToken = tokenJson.access_token;
         const expires = Number(tokenJson.expires_in || 3600);
 
+        // consume verifier
+        deleteVerifier(state);
+
         const redirectTo = process.env.NEXT_PUBLIC_APP_URL || origin;
         const res = NextResponse.redirect(redirectTo);
         // set cookie with access token (not httpOnly so client can read it)
         res.headers.append('Set-Cookie', `google_token=${encodeURIComponent(accessToken)}; Path=/; Max-Age=${Math.floor(expires)}; SameSite=Lax`);
-        // clear verifier
-        res.headers.append('Set-Cookie', `pkce_verifier=; Path=/; Max-Age=0; SameSite=Lax`);
         return res;
     } catch (e: any) {
         return NextResponse.json({ error: String(e) }, { status: 500 });

@@ -72,7 +72,7 @@ export default function Photos() {
                 {!loading && !imgSrc && <div className="text-xs text-gray-500">No photos available or not logged in</div>}
                 {imgSrc && (
                     <picture className="w-full h-full flex items-center justify-center">
-                        <img src={imgSrc} alt="Kiosk photo" className="max-w-full max-h-full object-contain object-center" />
+                        <img src={imgSrc} alt="Kiosk photo" className="w-full h-full object-fill object-center" />
                     </picture>
                 )}
             </div>

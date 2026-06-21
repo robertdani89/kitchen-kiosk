@@ -25,9 +25,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      style={styles.html}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="overflow-hidden">{children}</body>
     </html>
   );
+}
+
+const styles = {
+  html: {
+    fontSize: "1.5em",
+  },
 }

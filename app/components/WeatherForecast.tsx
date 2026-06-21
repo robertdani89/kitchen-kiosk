@@ -25,16 +25,16 @@ export default function WeatherForecast({
                                 } catch (e) { return d.date; }
                             })();
                             return (
-                                <div key={d.date} className="p-1 bg-gray-50 border border-gray-200 rounded flex flex-col items-center justify-between min-w-[60px]">
+                                <div key={d.date} className="w-full p-1 bg-gray-50 border border-gray-200 rounded flex flex-col items-center justify-between min-w-[60px]">
                                     <div className="">
                                         <div className="flex flex-col items-center mb-1">
                                             <div className="text-sm" title={d.date}>{dayLetter}</div>
                                             <img src={d.icon} alt={d.desc} className="w-15 h-15 m-[-10px]" />
-                                            <div className="text-[11px]">{d.maxTemp.toFixed(1)}°C <span className="text-gray-400">{d.minTemp.toFixed(1)}°C</span></div>
+                                            <div className="text-[15px]">{d.maxTemp.toFixed(1)}°C <span className="text-gray-400">{d.minTemp.toFixed(1)}°C</span></div>
                                         </div>
                                         <div>
-                                            <div className="text-[8px] text-gray-400 mb-1">💧{d.humidity}% 🌬️{d.wind.toFixed(1)} m/s</div>
-                                            <div className="text-[8px] text-gray-400 mb-1">🔽{d.pressure} hPa</div>
+                                            <div className="text-[12px] text-gray-400 mb-1">💧{d.humidity}% 🌬️{d.wind.toFixed(1)} m/s</div>
+                                            <div className="text-[12px] text-gray-400 mb-1">🔽{d.pressure} hPa</div>
                                         </div>
                                     </div>
                                 </div>

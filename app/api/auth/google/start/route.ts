@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { randomBytes, createHash } from 'crypto';
+import { setVerifier } from '../pkceStore';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,10 +28,14 @@ export async function GET(request: Request) {
             code_challenge_method: 'S256',
         });
 
+        // store PKCE verifier server-side keyed by state
+        const state = randomBytes(16).toString('hex');
+        setVerifier(state, codeVerifier);
+        params.append('state', state);
+
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
         const res = NextResponse.redirect(authUrl);
-        res.headers.append('Set-Cookie', `pkce_verifier=${codeVerifier}; Path=/; Max-Age=600; SameSite=Lax`);
         return res;
     } catch (e: any) {
         return NextResponse.json({ error: String(e) }, { status: 500 });
