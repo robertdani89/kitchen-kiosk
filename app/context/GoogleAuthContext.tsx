@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 type GoogleAuthContextType = {
     googleToken: string;
@@ -11,17 +11,25 @@ type GoogleAuthContextType = {
 const GoogleAuthContext = createContext<GoogleAuthContextType | null>(null);
 
 export function GoogleProvider({ children }: { children: React.ReactNode }) {
-    const getInitialToken = () => {
-        if (typeof window !== 'undefined') {
-            const fromStorage = localStorage.getItem('google_token');
-            if (fromStorage) return fromStorage;
-            const m = document.cookie.match(/(?:^|; )google_token=([^;]+)/);
-            if (m) return decodeURIComponent(m[1]);
-        }
-        return process.env.NEXT_PUBLIC_GOOGLE_TOKEN || '';
-    };
+    const [googleToken, setGoogleTokenRaw] = useState<string>('');
 
-    const [googleToken, setGoogleTokenRaw] = useState<string>(getInitialToken);
+    useEffect(() => {
+        try {
+            const fromStorage = localStorage.getItem('google_token');
+            if (fromStorage) {
+                setGoogleTokenRaw(fromStorage);
+                return;
+            }
+            const m = document.cookie.match(/(?:^|; )google_token=([^;]+)/);
+            if (m) {
+                setGoogleTokenRaw(decodeURIComponent(m[1]));
+                return;
+            }
+            if (process.env.NEXT_PUBLIC_GOOGLE_TOKEN) {
+                setGoogleTokenRaw(process.env.NEXT_PUBLIC_GOOGLE_TOKEN);
+            }
+        } catch (e) { }
+    }, []);
 
     const setGoogleToken = (t: string) => {
         try {

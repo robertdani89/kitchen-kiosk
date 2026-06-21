@@ -6,12 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "resize-photos": "node scripts/resize_photos.js"
   },
   "dependencies": {
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "^0.32.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
