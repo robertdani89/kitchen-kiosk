@@ -10,6 +10,7 @@ import { GoogleProvider } from './context/GoogleAuthContext';
 import Calendar from "./components/Calendar";
 import Tasks from "./components/Tasks";
 import Photos from "./components/Photos";
+import Verbs from "./components/Verbs";
 
 const address = process.env.NEXT_PUBLIC_WS_ADDRESS || "ws://192.168.0.139:8080/api";
 const weatherCity = process.env.NEXT_PUBLIC_WEATHER_CITY || "Budapest";
@@ -132,10 +133,13 @@ function HomeContent() {
 
                 <Calendar />
                 <Tasks />
+                <Verbs />
 
                 <div className="row-start-2 col-span-3 row-span-2">
                     <Photos />
                 </div>
+
+
                 {/* 
                 <div className="col-span-5 mt-2">
                     <div className="bg-white p-3 rounded shadow">

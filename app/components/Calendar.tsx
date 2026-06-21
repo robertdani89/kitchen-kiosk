@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
 import { useLog } from '../context/LogContext';
+
+const fetchingInterval = 10 * 60 * 1000;
+const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000;
 
 export default function Calendar() {
     const { googleToken, fetchWithAuth } = useGoogleAuth();
@@ -11,15 +14,27 @@ export default function Calendar() {
 
     const { addLog } = useLog();
 
-    useEffect(() => {
-        if (googleToken) loadEvents();
-    }, [googleToken]);
-
     const handleAuthorize = () => {
         window.open('/api/auth/google/start', '_blank');
     };
 
-    const loadEvents = async () => {
+    const fetchEvents = useCallback(async () => {
+        try {
+            const now = new Date();
+            const nowIso = now.toISOString();
+            const maxDate = new Date(now.getTime() + twoWeeksInMs);
+            const timeMaxIso = maxDate.toISOString();
+            const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=4&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(nowIso)}&timeMax=${encodeURIComponent(timeMaxIso)}`;
+            const res = await fetchWithAuth(url);
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        } catch (e) {
+            addLog('Google events fetch error: ' + String(e));
+            throw e;
+        }
+    }, [fetchWithAuth, addLog]);
+
+    const loadEvents = useCallback(async () => {
         setLoading(true);
         try {
             const data = await fetchEvents();
@@ -30,23 +45,16 @@ export default function Calendar() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchEvents, addLog]);
 
-    const fetchEvents = async () => {
-        try {
-            const now = new Date();
-            const nowIso = now.toISOString();
-            const maxDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
-            const timeMaxIso = maxDate.toISOString();
-            const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=4&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(nowIso)}&timeMax=${encodeURIComponent(timeMaxIso)}`;
-            const res = await fetchWithAuth(url);
-            if (!res.ok) throw new Error(await res.text());
-            return res.json();
-        } catch (e) {
-            addLog('Google events fetch error: ' + String(e));
-            throw e;
-        }
-    };
+    useEffect(() => {
+        if (!googleToken) return;
+        loadEvents();
+        const id = setInterval(() => {
+            loadEvents();
+        }, fetchingInterval);
+        return () => clearInterval(id);
+    }, [googleToken, loadEvents]);
 
     const pad = (n: number) => n.toString().padStart(2, '0');
     const formatDate = (iso?: string) => {

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useGoogleAuth } from '../context/GoogleAuthContext';
 import { useLog } from '../context/LogContext';
 
+const fetchingInterval = 10 * 60 * 1000;
+
 export default function Tasks() {
     const { googleToken, fetchWithAuth } = useGoogleAuth();
     const [tasks, setTasks] = useState<any[]>([]);
@@ -14,6 +16,8 @@ export default function Tasks() {
     useEffect(() => {
         if (googleToken) {
             loadTasks();
+            const interval = setInterval(loadTasks, fetchingInterval);
+            return () => clearInterval(interval);
         }
     }, [googleToken]);
 
