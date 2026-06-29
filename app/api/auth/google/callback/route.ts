@@ -34,6 +34,7 @@ export async function GET(request: Request) {
         if (!tokenRes.ok) return NextResponse.json({ error: tokenJson }, { status: 500 });
 
         const accessToken = tokenJson.access_token;
+        const refreshToken = tokenJson.refresh_token;
         const expires = Number(tokenJson.expires_in || 3600);
 
         // consume verifier
@@ -43,6 +44,9 @@ export async function GET(request: Request) {
         const res = NextResponse.redirect(redirectTo);
         // set cookie with access token (not httpOnly so client can read it)
         res.headers.append('Set-Cookie', `google_token=${encodeURIComponent(accessToken)}; Path=/; Max-Age=${Math.floor(expires)}; SameSite=Lax`);
+        if (refreshToken) {
+            res.headers.append('Set-Cookie', `google_refresh=${encodeURIComponent(refreshToken)}; Path=/; Max-Age=${31536000}; HttpOnly; SameSite=Lax`);
+        }
         return res;
     } catch (e: any) {
         return NextResponse.json({ error: String(e) }, { status: 500 });
