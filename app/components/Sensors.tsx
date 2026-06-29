@@ -1,6 +1,9 @@
 "use client";
 
-type Sensor = {
+import { useEffect, useState } from "react";
+import { useWebSocket } from "../context/WebSocketContext";
+
+export type SensorData = {
     id: number;
     name: string;
     topic: string;
@@ -11,14 +14,42 @@ type Sensor = {
 };
 
 export default function Sensors({
-    sensors,
-    onInjectSample,
-    onClear,
 }: {
-    sensors: Sensor[];
-    onInjectSample?: () => void;
-    onClear?: () => void;
-}) {
+    }) {
+    const { subscribeToWebSocket, unsubscribeFromWebSocket } = useWebSocket();
+
+    const [sensors, setSensors] = useState<SensorData[]>([
+        { id: 1, name: 'Outside', topic: 'Outside temp', temperature: null, humidity: null, last_seen: '', icon: '🌳' },
+        { id: 2, name: 'Living room', topic: 'Living room temp', temperature: null, humidity: null, last_seen: '', icon: '🛋️' },
+        { id: 3, name: 'Bedroom', topic: 'Bedroom temp', temperature: null, humidity: null, last_seen: '', icon: '🛏️' },
+    ]);
+
+    const processIncoming = (topic: string, payload: any) => {
+        const temp = payload.temperature ?? payload.temp ?? payload.payload?.temperature ?? payload.payload?.temp ?? null;
+        const hum = payload.humidity ?? payload.hum ?? payload.payload?.humidity ?? null;
+        const last_seen = payload.last_seen ?? payload.lastSeen ?? payload.time ?? '';
+
+        setSensors((sarr) => sarr.map((s) => {
+            if (s.topic === topic || topic.includes(s.name) || topic.toLowerCase().includes(s.name.toLowerCase())) {
+                return {
+                    ...s,
+                    temperature: temp != null ? Number(temp) : s.temperature,
+                    humidity: hum != null ? Number(hum) : s.humidity,
+                    last_seen: last_seen || s.last_seen,
+                };
+            }
+            return s;
+        }));
+    };
+
+    useEffect(() => {
+        const id = subscribeToWebSocket((topic, payload) => processIncoming(topic, payload));
+
+        return () => {
+            unsubscribeFromWebSocket(id);
+        };
+    }, []);
+
     return (
         <section className="h-full w-full bg-white p-1 rounded shadow">
             <h2 className="mb-2">Szenzorok</h2>
@@ -30,14 +61,6 @@ export default function Sensors({
                         <div className="text-sm">💦{s.humidity != null ? `${s.humidity.toFixed(1)} %` : '—'}</div>
                     </div>
                 ))}
-            </div>
-            <div className="flex gap-2 mt-3">
-                {onInjectSample && (
-                    <button className="px-3 py-1 bg-indigo-600 text-white rounded" onClick={onInjectSample}>Inject Sample</button>
-                )}
-                {onClear && (
-                    <button className="px-3 py-1 bg-gray-600 text-white rounded" onClick={onClear}>Clear</button>
-                )}
             </div>
         </section>
     );
