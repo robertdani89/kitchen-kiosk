@@ -59,6 +59,7 @@ export default function Sensors({
                         <div>{s.icon} {s.name} </div>
                         <div className="text-sm">🌡️{s.temperature != null ? `${s.temperature.toFixed(1)} °C` : '—'}</div>
                         <div className="text-sm">💦{s.humidity != null ? `${s.humidity.toFixed(1)} %` : '—'}</div>
+                        <div className="text-xs text-gray-500">Last seen: {s.last_seen || '—'}</div>
                     </div>
                 ))}
             </div>

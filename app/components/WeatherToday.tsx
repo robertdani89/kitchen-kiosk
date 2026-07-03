@@ -3,18 +3,14 @@
 import { useWeather } from "../context/WeatherContext";
 
 
-export default function WeatherToday({
-    city,
-}: {
-    city: string;
-}) {
+export default function WeatherToday() {
     const { weatherToday, weatherCity } = useWeather();
 
     return (
         <section className="w-full h-full bg-white p-1 rounded shadow">
             {weatherToday ? (
                 <>
-                    <h2 className="mb-4">{weatherCity ?? city} mai időjárás</h2>
+                    <h2 className="mb-4">{weatherCity} mai időjárás</h2>
                     <picture className="flex items-center justify-center">
                         <svg viewBox="0 0 362 170" className="w-full h-auto max-h-42" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Today's temperature chart">
                             {(() => {

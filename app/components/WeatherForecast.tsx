@@ -3,18 +3,14 @@
 import { useWeather } from "../context/WeatherContext";
 
 
-export default function WeatherForecast({
-    city,
-}: {
-    city: string;
-}) {
+export default function WeatherForecast() {
     const { weatherForecast, weatherCity } = useWeather();
 
     return (
         <section className="h-full grid bg-white p-1 rounded shadow">
             {weatherForecast ? (
                 <div className="h-full">
-                    <h2 className=" mt-2 mb-2">{weatherCity ?? city} előrejelzés</h2>
+                    <h2 className=" mt-2 mb-2">{weatherCity} előrejelzés</h2>
                     <div className="mt-2 text-sm flex flex-row justify-between gap-1 overflow-x-auto">
                         {weatherForecast.map((d) => {
                             const dayLetter = (() => {
