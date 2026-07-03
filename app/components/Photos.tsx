@@ -68,9 +68,9 @@ export default function Photos() {
     return (
         <section className="col-span-1 bg-white p-1 rounded shadow h-full flex flex-col">
             <div className="flex-1 rounded overflow-hidden flex items-center justify-center">
-                {loading && <div className="text-xs text-gray-500">Loading...</div>}
-                {!loading && !imgSrc && <div className="text-xs text-gray-500">No photos available or not logged in</div>}
-                {imgSrc && (
+                {loading && <div className="text-xs text-gray-500">Betöltés...</div>}
+                {!loading && !imgSrc && <div className="text-xs text-gray-500">Nincsenek elérhető fotók vagy nincs bejelentkezve</div>}
+                {!loading && imgSrc && (
                     <picture className="w-full h-full flex items-center justify-center">
                         <img src={imgSrc} alt="Kiosk photo" className="w-full h-full object-fill object-center" />
                     </picture>
