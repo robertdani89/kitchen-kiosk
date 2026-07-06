@@ -29,7 +29,6 @@ export function PageProvider({ children }: { children: React.ReactNode }) {
                 const prevIndex = (currentIndex - 1 + pages.length) % pages.length;
                 setCurrentPage(pages[prevIndex]);
             }
-
         };
 
         window.addEventListener('keydown', handleKeyDown);
