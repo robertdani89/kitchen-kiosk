@@ -6,9 +6,7 @@ import Verbs from "../components/Verbs";
 import WeatherForecast from "../components/WeatherForecast";
 import WeatherToday from "../components/WeatherToday";
 
-
-
-export function Home() {
+export default function Home() {
     return (
         <div className="h-[100vh] w-[100vw] p-1 bg-gray-100 text-gray-900 font-sans">
             <main className="mx-auto h-full grid grid-cols-5 grid-rows-3 gap-1">

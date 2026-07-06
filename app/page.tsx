@@ -4,15 +4,21 @@ import { LogProvider } from './context/LogContext';
 import { WeatherProvider } from "./context/WeatherContext";
 import { GoogleProvider } from './context/GoogleAuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
-import { PageProvider, usePage } from './context/PageContext';
-import HelloWorldPage from "./components/HelloWorldPage";
-import { Home as HomeContent } from "./pages/Home";
+import { PageProvider, pages, usePage } from './context/PageContext';
+import Home from "./pages/Home";
+import ShoppingPage from "./components/ShoppingPage";
+import ShoppingSettings from './components/ShoppingSettings';
 
+export const pageToComponentMap: Record<typeof pages[number], any> = {
+    'home': Home,
+    'shopping': ShoppingPage,
+    'shoppingSettings': ShoppingSettings,
+};
 
 function AppRouter() {
     const { currentPage } = usePage();
-    if (currentPage === 'hello') return <HelloWorldPage />;
-    return <HomeContent />;
+    const CurrentComponent = pageToComponentMap[currentPage];
+    return CurrentComponent ? <CurrentComponent /> : <Home />;
 }
 
 export default function ProvidersWrapper() {
