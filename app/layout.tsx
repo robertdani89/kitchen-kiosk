@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./services/excelMonitor.server";
+import { forceFetch } from "./services/excelMonitor.server";
+
+if (typeof window === "undefined") {
+  void forceFetch();
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
