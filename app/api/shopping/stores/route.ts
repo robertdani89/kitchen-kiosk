@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const DATA_DIR = path.join(process.cwd(), "data");
-const FILE_PATH = path.join(DATA_DIR, "categories.txt");
+const FILE_PATH = path.join(DATA_DIR, "stores.txt");
 
 async function ensureFile() {
     await fs.promises.mkdir(DATA_DIR, { recursive: true });
@@ -20,34 +20,41 @@ export async function GET() {
     const rows = text
         .split(/\r?\n/)
         .map((s) => s.trim())
-        .filter(Boolean)
+        .filter(Boolean);
 
-    const products = rows.map((s) => {
-        const parts = s.split("|").map((p) => p.trim());
-        const id = Number(parts[0]);
-        const preferredUnit = parts[1] ?? null;
-        return { id, preferredUnit };
+    const stores = rows.map((line) => {
+        const parts = line.split("|").map((p) => p.trim());
+        const id = parts[0] ?? "";
+        const chainName = parts[1] ?? null;
+        const address = parts[2] ?? null;
+        return { id: id || null, chainName: chainName || null, address: address || null };
     });
 
-    return NextResponse.json(products);
+    return NextResponse.json({ stores });
 }
 
 export async function POST(request: Request) {
     const body = await request.json();
-    const id = body?.id;
-    if (typeof id !== "number" || !Number.isFinite(id)) {
+    const idRaw = body?.id;
+    const chainName = body?.chainName ?? "";
+    const address = body?.address ?? "";
+
+    const id = String(idRaw ?? "").trim();
+    if (!id) {
         return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
     await ensureFile();
-    const preferredUnit = body?.preferredUnit ?? null;
-    await fs.promises.appendFile(FILE_PATH, `${id}|${preferredUnit}\n`, "utf8");
+    const safeChain = String(chainName).replace(/\|/g, "-");
+    const safeAddress = String(address).replace(/\|/g, "-");
+    await fs.promises.appendFile(FILE_PATH, `${id}|${safeChain}|${safeAddress}\n`, "utf8");
     return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(request: Request) {
     const body = await request.json();
-    const id = body?.id;
-    if (typeof id !== "number" || !Number.isFinite(id)) {
+    const idRaw = body?.id;
+    const id = String(idRaw ?? "").trim();
+    if (!id) {
         return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
     await ensureFile();
@@ -55,8 +62,8 @@ export async function DELETE(request: Request) {
     const lines = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
     const filtered = lines.filter((line) => {
         const parts = line.split("|").map((p) => p.trim());
-        const lineId = Number(parts[0]);
-        return lineId !== id;
+        const lineId = parts[0] ?? "";
+        return String(lineId) !== String(id);
     });
     const out = filtered.length ? filtered.join("\n") + "\n" : "";
     await fs.promises.writeFile(FILE_PATH, out, "utf8");
