@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePage } from "../context/PageContext";
+import { shoppingChains } from "../consts/shoppingChains";
 
 export default function ShoppingSettings() {
     const [value, setValue] = useState<string>("");
@@ -190,6 +190,14 @@ export default function ShoppingSettings() {
                 </div>
 
                 <div className="flex gap-2 mb-4">
+                    {storeChain && (
+                        <img
+                            src={shoppingChains.find((c) => c.name === storeChain)?.icon ?? ""}
+                            alt={storeChain}
+                            className="w-8 h-8 object-contain"
+                        />
+                    )}
+
                     <input
                         value={storeValue}
                         onChange={(e) => setStoreValue(e.target.value)}
@@ -201,15 +209,11 @@ export default function ShoppingSettings() {
                         onChange={(e) => setStoreChain(e.target.value)}
                         className="border rounded px-3 py-2"
                     >
-                        <option value="Tesco">Tesco</option>
-                        <option value="Rossmann">Rossmann</option>
-                        <option value="Spar">Spar</option>
-                        <option value="Müller">Müller</option>
-                        <option value="Lidl">Lidl</option>
-                        <option value="dm">dm</option>
-                        <option value="Auchan">Auchan</option>
-                        <option value="Penny">Penny</option>
-                        <option value="Aldi">Aldi</option>
+                        {shoppingChains.map((chain) => (
+                            <option key={chain.name} value={chain.name}>
+                                {chain.name}
+                            </option>
+                        ))}
                     </select>
                     <input
                         type="text"

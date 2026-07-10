@@ -3,10 +3,12 @@ import fs from "fs";
 import path from "path";
 import excelMonitor from "../../../services/excelMonitor.server";
 import { ProductDataExcelRow } from "@/app/services/productData";
+import { PriceItem } from "@/app/types/priceItem";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const CATEGORIES_FILE = path.join(DATA_DIR, "categories.txt");
 const STORES_FILE = path.join(DATA_DIR, "stores.txt");
+const LAST_DOWNLOADED_FILE = path.join(DATA_DIR, "excel_last_downloaded.txt");
 
 async function ensureCategoriesFile() {
     await fs.promises.mkdir(DATA_DIR, { recursive: true });
@@ -25,7 +27,7 @@ function parseNumber(v: any) {
     return Number.isFinite(n) ? n : NaN;
 }
 
-async function readStores(): Promise<Array<{ id: string; chainName: string | null; address: string | null }>> {
+async function readStores(): Promise<Array<{ id: string; chainName: string; address: string }>> {
     try {
         const text = await fs.promises.readFile(STORES_FILE, "utf8").catch(() => "");
         if (!text) return [];
@@ -36,9 +38,9 @@ async function readStores(): Promise<Array<{ id: string; chainName: string | nul
             .map((line) => {
                 const parts = line.split("|").map((p) => p.trim());
                 const id = String(parts[0] ?? "");
-                const chain = parts[1] ?? null;
-                const addr = parts[2] ?? null;
-                return { id, chainName: chain || null, address: addr || null };
+                const chain = parts[1] ?? "";
+                const addr = parts[2] ?? "";
+                return { id, chainName: chain, address: addr };
             });
     } catch (e) {
         console.error("readStores error", e);
@@ -85,16 +87,27 @@ async function readCategoriesFile(): Promise<{ categories: Array<{ id: number; p
     return { categories, mtime };
 }
 
+async function readLastDownloaded(): Promise<string | null> {
+    try {
+        const s = await fs.promises.readFile(LAST_DOWNLOADED_FILE, "utf8").catch(() => null as string | null);
+        return s ? s.trim() : null;
+    } catch (e) {
+        return null;
+    }
+}
+
 async function checkStoresAvailability(
     pid: string,
-    stores: Array<{ id: string; chainName: string | null; address: string | null }>,
-    productChain: string,
-): Promise<{ id: string; chainName: string | null; address: string | null } | null> {
+    stores: Array<{ id: string; chainName: string; address: string }>,
+    productChain: string | null,
+): Promise<{ id: string; chainName: string; address: string } | null> {
     if (!pid) return null;
     if (!stores || stores.length === 0) return null;
 
     // Filter to stores in the same chain (case-insensitive). If no productChain provided, check all.
-    const filtered = stores.filter((s) => (s.chainName || "").toLowerCase() === productChain.toLowerCase());
+    const filtered = productChain
+        ? stores.filter((s) => (s.chainName || "").toLowerCase() === productChain.toLowerCase())
+        : stores;
 
 
     for (const s of filtered) {
@@ -127,7 +140,8 @@ export async function GET() {
     }
 
     if (!data || data.length === 0) {
-        return NextResponse.json({ results: [] });
+        const lastChecked = await readLastDownloaded();
+        return NextResponse.json({ results: [], lastChecked });
     }
 
     const stores = await readStores();
@@ -135,10 +149,11 @@ export async function GET() {
 
     // return cached results if data and category/store files haven't changed
     if (cachedResults && cachedResults.dataRef === data && cachedResults.categoriesMtime === categoriesMtime && cachedResults.storesMtime === storesMtime) {
-        return NextResponse.json({ results: cachedResults.results });
+        const lastChecked = await readLastDownloaded();
+        return NextResponse.json({ results: cachedResults.results, lastChecked });
     }
 
-    const results: any[] = [];
+    const results: PriceItem[] = [];
 
     for (const { id, preferredUnit } of categories) {
         const cidStr = String(id);
@@ -159,42 +174,33 @@ export async function GET() {
             .sort((a, b) => a.value - b.value)
             .map((c) => c.row);
 
-        let chosen: ProductDataExcelRow | null = null;
-        let chosenStore: { id: string; chainName: string | null; address: string | null } | null = null;
-
-        const bestOverall: ProductDataExcelRow | null = candidates.length > 0 ? candidates[0] : null;
-
+        // Collect up to 3 best available candidates (lowest prices), one per chain
+        const availableBest: Array<{ row: ProductDataExcelRow; store: { id: string; chainName: string; address: string } }> = [];
+        const seenChains = new Set<string>();
         for (const candidate of candidates) {
+            if (availableBest.length >= 3) break;
+            const candidateChainKey = (candidate.chainName).toLowerCase();
+            if (candidateChainKey && seenChains.has(candidateChainKey)) continue; // skip duplicate chains
             const pid = String(candidate.productId ?? "");
             const store = await checkStoresAvailability(pid, stores, candidate.chainName);
             if (store) {
-                chosen = candidate;
-                chosenStore = store;
-                break;
+                availableBest.push({ row: candidate, store });
+                if (candidateChainKey) seenChains.add(candidateChainKey);
             }
         }
 
-        // If there's no overall best, skip
-        if (!bestOverall) {
-            console.warn(`No best product found for category ${id}`);
-            continue;
-        }
-
-        // Use chosen product for top-level fields when available, otherwise fall back to overall best.
-        const primary = chosen ?? bestOverall;
+        const primary = availableBest.length > 0 ? availableBest[0].row : null;
 
         results.push({
+            prices: availableBest.length > 0
+                ? availableBest.map((b) => ({ price: parseNumber(b.row.minUnitPrice), chainName: b.row.chainName, storeName: b.store.address }))
+                : [],
             categoryId: id,
-            categoryName: primary.categoryName ?? null,
-            productId: primary.productId ?? null,
-            productName: primary.productName ?? null,
-            chainName: primary.chainName ?? null,
-            unit: primary.unit ?? null,
-            package: primary.package ?? null,
-            // Always store the best overall prices even if the chosen store doesn't have the product
-            minPrice: parseNumber(bestOverall.minPrice),
-            minUnitPrice: parseNumber(bestOverall.minUnitPrice),
-            availableStore: chosenStore,
+            categoryName: primary?.categoryName ?? null,
+            productId: primary?.productId ?? null,
+            productName: primary?.productName ?? null,
+            unit: primary?.unit ?? null,
+            package: primary?.package ?? null,
         });
     }
 
@@ -206,5 +212,6 @@ export async function GET() {
         storesMtime: storesMtime,
     };
 
-    return NextResponse.json({ results });
+    const lastChecked = await readLastDownloaded();
+    return NextResponse.json({ results, lastChecked });
 }
