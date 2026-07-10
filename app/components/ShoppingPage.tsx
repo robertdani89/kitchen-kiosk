@@ -50,9 +50,9 @@ export default function ShoppingPage() {
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {items.map((it) => (
-                                <div key={String(it.categoryId)} className="p-3 bg-gray-50 rounded flex items-center justify-between gap-3">
+                                <div key={`${it.categoryId}${it.unit}`} className="p-3 bg-gray-50 rounded flex items-center justify-between gap-3">
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-medium text-sm truncate">{it.categoryName ?? `Category ${it.categoryId}`}</div>
+                                        <div className="font-medium font-semibold text-sm truncate">{it.categoryName}</div>
                                         <div
                                             className="text-sm text-gray-600"
                                             style={{
@@ -69,7 +69,7 @@ export default function ShoppingPage() {
                                     <div className="flex flex-col items-end ml-3">
                                         {it.prices.map((p, idx) => (
                                             <div key={idx} className="text-sm text-gray-700">
-                                                <span style={{ fontWeight: "bold" }}>{p.price.toFixed(2)}Ft</span>{" "}
+                                                <span className="font-semibold">{p.price.toFixed(2)}Ft</span>{" "}
                                                 <img src={shoppingChainsMap[p.chainName].icon} alt={p.chainName} className="inline-block w-4 h-4 mr-1" />{p.storeName}
                                             </div>
                                         ))}

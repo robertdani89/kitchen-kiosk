@@ -30,7 +30,7 @@ export default function Sensors({
         const last_seen = payload.last_seen ?? payload.lastSeen ?? payload.time ?? '';
 
         setSensors((sarr) => sarr.map((s) => {
-            if (s.topic === topic || topic.includes(s.name) || topic.toLowerCase().includes(s.name.toLowerCase())) {
+            if (s.topic === topic) {
                 return {
                     ...s,
                     temperature: temp != null ? Number(temp) : s.temperature,
