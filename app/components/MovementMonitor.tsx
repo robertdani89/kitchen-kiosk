@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useWebSocket } from "../context/WebSocketContext";
 import { useLog } from "../context/LogContext";
 
@@ -14,6 +14,21 @@ export default function MovementMonitor() {
 
     const lastStateRef = useRef<boolean | null>(null);
     const lastSentAtRef = useRef<number>(0);
+
+    const sendMonitorAction = useCallback(async (action: "on" | "off") => {
+        addLog(`MovementMonitor: calling /api/monitor action=${action}`);
+        try {
+            const res = await fetch("/api/monitor", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action }),
+            });
+            const text = await res.text().catch(() => "");
+            addLog(`MovementMonitor: /api/monitor responded ${res.status} ${res.statusText} - ${text}`);
+        } catch (e: any) {
+            addLog(`MovementMonitor: fetch error ${String(e)}`);
+        }
+    }, [addLog]);
 
     useEffect(() => {
         if (!enabled) {
@@ -43,26 +58,31 @@ export default function MovementMonitor() {
             lastSentAtRef.current = now;
 
             const action = mv ? "on" : "off";
-            addLog(`MovementMonitor: calling /api/monitor action=${action}`);
-
-            try {
-                const res = await fetch("/api/monitor", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action }),
-                });
-                const text = await res.text().catch(() => "");
-                addLog(`MovementMonitor: /api/monitor responded ${res.status} ${res.statusText} - ${text}`);
-            } catch (e: any) {
-                addLog(`MovementMonitor: fetch error ${String(e)}`);
-            }
+            await sendMonitorAction(action);
         });
 
         return () => {
             addLog("MovementMonitor: unsubscribing");
             unsubscribeFromWebSocket(id);
         };
-    }, [subscribeToWebSocket, unsubscribeFromWebSocket, enabled, addLog]);
+    }, [subscribeToWebSocket, unsubscribeFromWebSocket, enabled, addLog, sendMonitorAction]);
+
+    // key listeners: 'a' => off, 's' => on
+    useEffect(() => {
+        const handler = (ev: KeyboardEvent) => {
+            const k = ev.key?.toLowerCase();
+            if (k === 'a') {
+                addLog("MovementMonitor: keypress 'a' -> off");
+                void sendMonitorAction('off');
+            }
+            if (k === 's') {
+                addLog("MovementMonitor: keypress 's' -> on");
+                void sendMonitorAction('on');
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [sendMonitorAction, addLog]);
 
     return null;
 }

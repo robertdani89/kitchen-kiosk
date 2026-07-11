@@ -23,8 +23,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "invalid action" }, { status: 400 });
         }
 
-        const onCmd = process.env.MONITOR_ON_CMD || "xrandr --output HDMI-1 --auto";
-        const offCmd = process.env.MONITOR_OFF_CMD || "xrandr --output HDMI-1 --off";
+        const onCmd = process.env.MONITOR_ON_CMD || "DISPLAY=:0 xrandr --output HDMI-1 --auto";
+        const offCmd = process.env.MONITOR_OFF_CMD || "DISPLAY=:0 xrandr --output HDMI-1 --off";
         const cmd = action === "on" ? onCmd : offCmd;
 
         try {
