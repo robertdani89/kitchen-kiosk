@@ -27,20 +27,6 @@ export default function Home() {
                 <div className="row-start-2 col-span-3 row-span-2">
                     <Photos />
                 </div>
-
-
-                {/* 
-                <div className="col-span-5 mt-2">
-                    <div className="bg-white p-3 rounded shadow">
-                        <div className="flex justify-between items-center mb-2">
-                            <div className="text-sm">Connection: {connected ? 'Connected' : 'Disconnected'}</div>
-                            <div className="text-xs text-gray-600">WebSocket: {address}</div>
-                        </div>
-                        <div className="max-h-40 overflow-auto border p-2 bg-gray-50">
-                            {logs.map((l, i) => <div key={i} className="text-xs">{l}</div>)}
-                        </div>
-                    </div>
-                </div> */}
             </main>
         </div>
     );

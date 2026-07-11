@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useWebSocket } from "./WebSocketContext";
 
-export const pages = ['home', 'shopping', 'shoppingSettings'] as const;
+export const pages = ['home', 'shopping', 'shoppingSettings', 'logs'] as const;
 
 export type PageId = typeof pages[number];
 

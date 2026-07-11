@@ -7,13 +7,15 @@ import { WebSocketProvider } from './context/WebSocketContext';
 import MovementMonitor from './components/MovementMonitor';
 import { PageProvider, pages, usePage } from './context/PageContext';
 import Home from "./pages/Home";
-import ShoppingPage from "./components/ShoppingPage";
-import ShoppingSettings from './components/ShoppingSettings';
+import ShoppingPage from "./pages/ShoppingPage";
+import ShoppingSettings from './pages/ShoppingSettings';
+import Logs from "./pages/Logs";
 
 export const pageToComponentMap: Record<typeof pages[number], any> = {
     'home': Home,
     'shopping': ShoppingPage,
     'shoppingSettings': ShoppingSettings,
+    'logs': Logs,
 };
 
 function AppRouter() {
