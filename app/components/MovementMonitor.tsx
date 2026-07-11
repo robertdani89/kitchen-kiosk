@@ -17,20 +17,20 @@ export default function MovementMonitor() {
 
     useEffect(() => {
         if (!enabled) {
-            try { addLog("MovementMonitor: disabled by NEXT_PUBLIC_ENABLE_MOVEMENT_MONITOR"); } catch (e) { }
+            addLog("MovementMonitor: disabled by NEXT_PUBLIC_ENABLE_MOVEMENT_MONITOR");
             return;
         }
 
-        try { addLog("MovementMonitor: enabled, subscribing to topic: " + topic); } catch (e) { }
+        addLog("MovementMonitor: enabled, subscribing to topic: " + topic);
 
         const id = subscribeToWebSocket(async (t, payload) => {
-            try { addLog(`MovementMonitor: incoming message t=${String(t)} payload=${JSON.stringify(payload)}`); } catch (e) { }
+            addLog(`MovementMonitor: incoming message t=${String(t)} payload=${JSON.stringify(payload)}`);
 
             if (t !== topic) return;
 
             const mv = payload?.occupancy;
 
-            try { addLog(`MovementMonitor: parsed occupancy => ${String(mv)}`); } catch (e) { }
+            addLog(`MovementMonitor: parsed occupancy => ${String(mv)}`);
 
             if (mv === null || mv === undefined) return;
 
@@ -43,7 +43,7 @@ export default function MovementMonitor() {
             lastSentAtRef.current = now;
 
             const action = mv ? "on" : "off";
-            try { addLog(`MovementMonitor: calling /api/monitor action=${action}`); } catch (e) { }
+            addLog(`MovementMonitor: calling /api/monitor action=${action}`);
 
             try {
                 const res = await fetch("/api/monitor", {
@@ -52,14 +52,14 @@ export default function MovementMonitor() {
                     body: JSON.stringify({ action }),
                 });
                 const text = await res.text().catch(() => "");
-                try { addLog(`MovementMonitor: /api/monitor responded ${res.status} ${res.statusText} - ${text}`); } catch (e) { }
+                addLog(`MovementMonitor: /api/monitor responded ${res.status} ${res.statusText} - ${text}`);
             } catch (e: any) {
-                try { addLog(`MovementMonitor: fetch error ${String(e)}`); } catch (err) { }
+                addLog(`MovementMonitor: fetch error ${String(e)}`);
             }
         });
 
         return () => {
-            try { addLog("MovementMonitor: unsubscribing"); } catch (e) { }
+            addLog("MovementMonitor: unsubscribing");
             unsubscribeFromWebSocket(id);
         };
     }, [subscribeToWebSocket, unsubscribeFromWebSocket, enabled, addLog]);

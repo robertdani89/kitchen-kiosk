@@ -27,16 +27,19 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     const subscribeToWebSocket = useCallback((cb: (topic: string, payload: any) => void): string => {
         const id = String(++subIdCounter.current);
         subscribersRef.current.set(id, { cb });
+        try { addLog(`WebSocketContext: subscriber added id=${id}`); } catch (e) { }
         return id;
     }, []);
 
     const unsubscribeFromWebSocket = useCallback((id: string) => {
         subscribersRef.current.delete(id);
+        try { addLog(`WebSocketContext: subscriber removed id=${id}`); } catch (e) { }
     }, []);
 
     const processIncoming = (topic: string, payload: any) => {
+        try { addLog(`WebSocketContext: dispatching topic=${topic} payload=${JSON.stringify(payload)}`); } catch (e) { }
         subscribersRef.current.forEach(({ cb }) => {
-            cb(topic, payload);
+            try { cb(topic, payload); } catch (e) { console.error('subscriber cb error', e); }
         });
     };
 
@@ -59,15 +62,22 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
             });
 
             ws.addEventListener('message', (ev) => {
-                const data = typeof ev.data === 'string' ? ev.data : null;
+                const data = typeof ev.data === 'string' ? ev.data : (ev.data ? ev.data.toString() : null);
+
+                addLog(`WebSocketContext: raw message: ${String(data)}`);
                 if (data) {
                     try {
                         const parsed = JSON.parse(data);
+                        addLog(`WebSocketContext: parsed message: ${JSON.stringify(parsed)}`);
                         if (parsed && typeof parsed === 'object') {
                             if (parsed.topic && parsed.payload) {
                                 processIncoming(parsed.topic, parsed.payload);
                             } else if (parsed.payload?.topic) {
                                 processIncoming(parsed.payload.topic, parsed.payload);
+                            } else if (parsed.topic) {
+                                processIncoming(parsed.topic, parsed);
+                            } else {
+                                processIncoming('', parsed);
                             }
                         }
                     } catch (e) {
@@ -78,14 +88,14 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
                 }
             });
 
-            ws.addEventListener('close', () => {
+            ws.addEventListener('close', (ev) => {
                 setConnected(false);
-                addLog('WebSocket closed');
+                addLog(`WebSocket closed code=${(ev as any)?.code} reason=${String((ev as any)?.reason || '')}`);
             });
 
             ws.addEventListener('error', (err) => {
                 console.error('WebSocket error:', err);
-                addLog('WebSocket error');
+                addLog('WebSocket error: ' + String(err));
             });
         } catch (e) {
             addLog('WebSocket connect error: ' + String(e));
