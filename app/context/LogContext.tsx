@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
 
 type LogContextType = {
     logs: string[];
@@ -13,15 +13,17 @@ const LogContext = createContext<LogContextType | null>(null);
 export function LogProvider({ children }: { children: React.ReactNode }) {
     const [logs, setLogs] = useState<string[]>([]);
 
-    const addLog = (msg: string) => {
+    const addLog = useCallback((msg: string) => {
         console.log(msg);
         setLogs((s) => [new Date().toLocaleTimeString() + " — " + msg, ...s]);
-    };
+    }, []);
 
-    const clearLogs = () => setLogs([]);
+    const clearLogs = useCallback(() => setLogs([]), []);
+
+    const value = useMemo(() => ({ logs, addLog, clearLogs }), [logs, addLog, clearLogs]);
 
     return (
-        <LogContext.Provider value={{ logs, addLog, clearLogs }}>{children}</LogContext.Provider>
+        <LogContext.Provider value={value}>{children}</LogContext.Provider>
     );
 }
 

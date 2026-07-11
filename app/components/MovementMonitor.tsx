@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useWebSocket } from "../context/WebSocketContext";
 import { useLog } from "../context/LogContext";
 
 const topic = "Kitchen monitor";
 
 export default function MovementMonitor() {
-    const enabled = (process.env.NEXT_PUBLIC_ENABLE_MOVEMENT_MONITOR === "1" || process.env.NEXT_PUBLIC_ENABLE_MOVEMENT_MONITOR === "true");
+    const enabled = useMemo(() => process.env.NEXT_PUBLIC_ENABLE_MOVEMENT_MONITOR === "1" || process.env.NEXT_PUBLIC_ENABLE_MOVEMENT_MONITOR === "true", []);
 
     const { subscribeToWebSocket, unsubscribeFromWebSocket } = useWebSocket();
     const { addLog } = useLog();
