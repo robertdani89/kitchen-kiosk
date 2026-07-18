@@ -96,11 +96,19 @@ async function readLastDownloaded(): Promise<string | null> {
     }
 }
 
+type ApiPrice = { type: string; amount: number; unitAmount: number };
+type StoreAvailability = {
+    store: { id: string; chainName: string; address: string };
+    apiPrices: ApiPrice[];
+    priceMatches: boolean;
+};
+
 async function checkStoresAvailability(
     pid: string,
     stores: Array<{ id: string; chainName: string; address: string }>,
     productChain: string | null,
-): Promise<{ id: string; chainName: string; address: string } | null> {
+    candidatePrice: number,
+): Promise<StoreAvailability | null> {
     if (!pid) return null;
     if (!stores || stores.length === 0) return null;
 
@@ -109,6 +117,7 @@ async function checkStoresAvailability(
         ? stores.filter((s) => (s.chainName || "").toLowerCase() === productChain.toLowerCase())
         : stores;
 
+    let fallback: StoreAvailability | null = null;
 
     for (const s of filtered) {
         const sid = s.id ?? "";
@@ -116,14 +125,37 @@ async function checkStoresAvailability(
         const url = `https://arfigyelo.gvh.hu/api/product/${encodeURIComponent(pid)}/shop/${encodeURIComponent(sid)}`;
         try {
             const res = await fetch(url);
-            if (res.status === 200) return s; // return first matching store
+            if (res.status === 200) {
+                const json = await res.json();
+                const apiPrices: ApiPrice[] = (json.shops ?? []).flatMap(
+                    (shop: any) =>
+                        (shop.prices ?? []).map((p: any) => ({
+                            type: String(p.type ?? ""),
+                            amount: Number(p.amount ?? 0),
+                            unitAmount: Number(p.unitAmount ?? 0),
+                        }))
+                );
+                const priceMatches =
+                    Number.isFinite(candidatePrice) &&
+                    apiPrices.some(
+                        (p) => Math.abs(p.amount - candidatePrice) < 1 || Math.abs(p.unitAmount - candidatePrice) < 1
+                    );
+                if (priceMatches) {
+                    // Price confirmed — stop early
+                    return { store: s, apiPrices, priceMatches: true };
+                }
+                if (!fallback) {
+                    // Keep first available store as fallback, continue looking for a price match
+                    fallback = { store: s, apiPrices, priceMatches: false };
+                }
+            }
             // continue on 404 or other non-200
         } catch (err) {
             // ignore and continue to next store
         }
     }
 
-    return null;
+    return fallback;
 }
 
 export async function GET() {
@@ -161,7 +193,7 @@ export async function GET() {
         if (catRows.length === 0) continue;
 
         // Sort candidates by unit price (fallback to price) ascending
-        const candidates = catRows
+        const sortedCandidates = catRows
             .map((r) => ({
                 row: r,
                 value: ((): number => {
@@ -171,36 +203,91 @@ export async function GET() {
                 })(),
             }))
             .filter((c) => Number.isFinite(c.value))
-            .sort((a, b) => a.value - b.value)
-            .map((c) => c.row);
+            .sort((a, b) => a.value - b.value);
+        const bestPossiblePrice = sortedCandidates.length > 0 ? sortedCandidates[0].value : null;
+        const bestPossibleChainName = sortedCandidates.length > 0 ? (sortedCandidates[0].row.chainName ?? null) : null;
+        const candidates = sortedCandidates.map((c) => c.row);
 
-        // Collect up to 3 best available candidates (lowest prices), one per chain
-        const availableBest: Array<{ row: ProductDataExcelRow; store: { id: string; chainName: string; address: string } }> = [];
-        const seenChains = new Set<string>();
+        // Collect available candidates, one per chain.
+        // Only skip a chain once we have a price-confirmed candidate for it.
+        // Unconfirmed (price mismatch) candidates are kept and may be replaced by a better result.
+        type AvailableCandidate = StoreAvailability & { row: ProductDataExcelRow; effectivePrice: number };
+        const allAvailable: AvailableCandidate[] = [];
+        const confirmedChains = new Set<string>();
+
         for (const candidate of candidates) {
-            if (availableBest.length >= 3) break;
-            const candidateChainKey = (candidate.chainName).toLowerCase();
-            if (candidateChainKey && seenChains.has(candidateChainKey)) continue; // skip duplicate chains
+            // Stop once we have 3 confirmed (price-matching) chains
+            if (confirmedChains.size >= 3) break;
+            const candidateChainKey = (candidate.chainName ?? "").toLowerCase();
+            // Skip chain if already price-confirmed
+            if (candidateChainKey && confirmedChains.has(candidateChainKey)) continue;
+
+            const candidatePrice = ((): number => {
+                const v = parseNumber((candidate as any).minUnitPrice);
+                const f = Number.isFinite(v) ? v : parseNumber((candidate as any).minPrice);
+                return Number.isFinite(f) ? f : Infinity;
+            })();
+
             const pid = String(candidate.productId ?? "");
-            const store = await checkStoresAvailability(pid, stores, candidate.chainName);
-            if (store) {
-                availableBest.push({ row: candidate, store });
-                if (candidateChainKey) seenChains.add(candidateChainKey);
+            const availability = await checkStoresAvailability(pid, stores, candidate.chainName, candidatePrice);
+
+            if (availability) {
+                const effectivePrice =
+                    availability.apiPrices.length > 0
+                        ? availability.apiPrices.reduce((min, p) => Math.min(min, p.unitAmount), Infinity)
+                        : candidatePrice;
+
+                const existingIdx = candidateChainKey
+                    ? allAvailable.findIndex((a) => (a.row.chainName ?? "").toLowerCase() === candidateChainKey)
+                    : -1;
+
+                if (existingIdx >= 0) {
+                    const existing = allAvailable[existingIdx];
+                    // Prefer confirmed over unconfirmed; otherwise prefer lower effective price
+                    if (
+                        (availability.priceMatches && !existing.priceMatches) ||
+                        (!availability.priceMatches && !existing.priceMatches && effectivePrice < existing.effectivePrice)
+                    ) {
+                        allAvailable[existingIdx] = { ...availability, row: candidate, effectivePrice };
+                        if (availability.priceMatches && candidateChainKey) confirmedChains.add(candidateChainKey);
+                    }
+                } else {
+                    allAvailable.push({ ...availability, row: candidate, effectivePrice });
+                    if (availability.priceMatches && candidateChainKey) confirmedChains.add(candidateChainKey);
+                }
             }
+        }
+
+        // Sort all available candidates by effective price and pick top 3, one per chain
+        allAvailable.sort((a, b) => a.effectivePrice - b.effectivePrice);
+        const availableBest: AvailableCandidate[] = [];
+        const seenChains = new Set<string>();
+        for (const c of allAvailable) {
+            if (availableBest.length >= 3) break;
+            const chainKey = (c.row.chainName ?? "").toLowerCase();
+            if (chainKey && seenChains.has(chainKey)) continue;
+            availableBest.push(c);
+            if (chainKey) seenChains.add(chainKey);
         }
 
         const primary = availableBest.length > 0 ? availableBest[0].row : null;
 
         results.push({
-            prices: availableBest.length > 0
-                ? availableBest.map((b) => ({ price: parseNumber(b.row.minUnitPrice), chainName: b.row.chainName, storeName: b.store.address }))
-                : [],
+            prices: availableBest.map((b) => ({
+                price: b.apiPrices.length > 0
+                    ? b.apiPrices.reduce((min, p) => Math.min(min, p.unitAmount), Infinity)
+                    : parseNumber(b.row.minUnitPrice),
+                chainName: b.row.chainName,
+                storeName: b.store.address,
+            })),
             categoryId: id,
             categoryName: primary?.categoryName ?? null,
             productId: primary?.productId ?? null,
             productName: primary?.productName ?? null,
             unit: primary?.unit ?? null,
             package: primary?.package ?? null,
+            bestPossiblePrice,
+            bestPossibleChainName,
         });
     }
 

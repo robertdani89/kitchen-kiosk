@@ -6,4 +6,6 @@ export type PriceItem = {
     productName: string | null;
     unit: string | null;
     package: string | null;
+    bestPossiblePrice: number | null;
+    bestPossibleChainName: string | null;
 };

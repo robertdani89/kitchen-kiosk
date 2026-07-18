@@ -67,6 +67,11 @@ export default function ShoppingPage() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end ml-3">
+                                        {it.bestPossiblePrice !== null &&
+                                            it.prices.length > 0 &&
+                                            Math.abs(it.bestPossiblePrice - it.prices[0].price) > 0.5 && (
+                                                <div className="text-xs text-gray-400">({it.bestPossiblePrice.toFixed(2)}Ft @ {it.bestPossibleChainName})</div>
+                                            )}
                                         {it.prices.map((p, idx) => (
                                             <div key={idx} className="text-sm text-gray-700">
                                                 <span className="font-semibold">{p.price.toFixed(2)}Ft</span>{" "}
