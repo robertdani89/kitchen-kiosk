@@ -4,9 +4,12 @@ import { LogProvider } from './context/LogContext';
 import { WeatherProvider } from "./context/WeatherContext";
 import { GoogleProvider } from './context/GoogleAuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
+import { KeyEventProvider } from './context/KeyEventContext';
+import { RotaryEventProvider } from './context/RotaryEventContext';
 import MovementMonitor from './components/MovementMonitor';
 import { PageProvider, pages, usePage } from './context/PageContext';
 import Home from "./pages/Home";
+import CustomPage from "./pages/Custom";
 import ShoppingPage from "./pages/ShoppingPage";
 import ShoppingSettings from './pages/ShoppingSettings';
 import Logs from "./pages/Logs";
@@ -14,6 +17,7 @@ import Logs from "./pages/Logs";
 export const pageToComponentMap: Record<typeof pages[number], any> = {
     'home': Home,
     'shopping': ShoppingPage,
+    'custom': CustomPage,
     'shoppingSettings': ShoppingSettings,
     'logs': Logs,
 };
@@ -33,9 +37,13 @@ export default function ProvidersWrapper() {
                 <GoogleProvider>
                     <WebSocketProvider>
                         {enableMovementMonitor && <MovementMonitor />}
-                        <PageProvider>
-                            <AppRouter />
-                        </PageProvider>
+                        <KeyEventProvider>
+                            <RotaryEventProvider>
+                                <PageProvider>
+                                    <AppRouter />
+                                </PageProvider>
+                            </RotaryEventProvider>
+                        </KeyEventProvider>
                     </WebSocketProvider>
                 </GoogleProvider>
             </WeatherProvider>

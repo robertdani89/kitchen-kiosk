@@ -1,15 +1,26 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { useWebSocket } from "./WebSocketContext";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useKeyEvent } from "./KeyEventContext";
+import { useRotaryEvent } from "./RotaryEventContext";
 
-export const pages = ['home', 'shopping', 'shoppingSettings', 'logs'] as const;
+export const pages = ['home', 'shopping', 'custom', 'shoppingSettings', 'logs'] as const;
+
+const pageNavigationMap: Record<typeof pages[number], { next: typeof pages[number], prev: typeof pages[number] }> = {
+    'home': { next: 'shopping', prev: 'logs' },
+    'shopping': { next: 'custom', prev: 'home' },
+    'custom': { next: 'home', prev: 'shopping' },
+    'shoppingSettings': { next: 'home', prev: 'home' },
+    'logs': { next: 'home', prev: 'home' },
+};
 
 export type PageId = typeof pages[number];
 
 type PageContextType = {
     currentPage: PageId;
     navigateTo: (page: PageId) => void;
+    navigateNext: () => void;
+    navigatePrev: () => void;
 };
 
 const PageContext = createContext<PageContextType | null>(null);
@@ -17,62 +28,45 @@ const PageContext = createContext<PageContextType | null>(null);
 export function PageProvider({ children }: { children: React.ReactNode }) {
     const [currentPage, setCurrentPage] = useState<PageId>('home');
 
-    const changePageBy = useCallback((delta: number) => {
-        setCurrentPage((prev) => {
-            const currentIndex = pages.indexOf(prev);
-            const nextIndex = (currentIndex + delta + pages.length) % pages.length;
-            return pages[nextIndex];
-        });
-    }, []);
+    const { subscribe: subscribeKey, unsubscribe: unsubscribeKey } = useKeyEvent();
+    const { subscribe: subscribeRotary, unsubscribe: unsubscribeRotary } = useRotaryEvent();
 
     useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'ArrowRight') changePageBy(1);
-            if (event.key === 'ArrowLeft') changePageBy(-1);
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        }
-    }, [changePageBy]);
-
-    // subscribe to websocket messages for page navigation (zigbee rotary cube)
-    const { subscribeToWebSocket, unsubscribeFromWebSocket } = useWebSocket();
-
-    useEffect(() => {
-        const id = subscribeToWebSocket((topic, payload) => {
-            try {
-                const t = String(topic || '');
-                console.log('PageContext: received websocket message', t, payload);
-                if (t !== 'Office cube') return;
-
-                let action: any = payload?.action ?? payload?.payload?.action ?? null;
-                if (!action && typeof payload === 'string') {
-                    try {
-                        const p = JSON.parse(payload);
-                        if (p) {
-                            if (p.action) action = p.action;
-                        }
-                    } catch (e) { }
-                }
-
-                if (action === 'rotate_right') changePageBy(1);
-                if (action === 'rotate_left') changePageBy(-1);
-            } catch (e) {
-                // ignore
+        const id = subscribeKey(100, (e) => {
+            if (e.key === 'ArrowRight') {
+                setCurrentPage(prev => pageNavigationMap[prev].next);
+                return true;
             }
+            if (e.key === 'ArrowLeft') {
+                setCurrentPage(prev => pageNavigationMap[prev].prev);
+                return true;
+            }
+            return false;
         });
+        return () => unsubscribeKey(id);
+    }, [subscribeKey, unsubscribeKey]);
 
-        return () => {
-            unsubscribeFromWebSocket(id);
-        };
-    }, [subscribeToWebSocket, unsubscribeFromWebSocket, changePageBy]);
+    useEffect(() => {
+        const id = subscribeRotary(100, (action) => {
+            if (action === 'rotate_right') {
+                setCurrentPage(prev => pageNavigationMap[prev].next);
+                return true;
+            }
+            if (action === 'rotate_left') {
+                setCurrentPage(prev => pageNavigationMap[prev].prev);
+                return true;
+            }
+            return false;
+        });
+        return () => unsubscribeRotary(id);
+    }, [subscribeRotary, unsubscribeRotary]);
 
     const navigateTo = (page: PageId) => setCurrentPage(page);
+    const navigateNext = () => setCurrentPage((prev) => pageNavigationMap[prev].next);
+    const navigatePrev = () => setCurrentPage((prev) => pageNavigationMap[prev].prev);
 
     return (
-        <PageContext.Provider value={{ currentPage, navigateTo }}>
+        <PageContext.Provider value={{ currentPage, navigateTo, navigateNext, navigatePrev }}>
             {children}
         </PageContext.Provider>
     );
