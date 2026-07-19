@@ -4,6 +4,8 @@ import path from "path";
 import excelMonitor from "../../../services/excelMonitor.server";
 import { ProductDataExcelRow } from "@/app/services/productData";
 import { PriceItem } from "@/app/types/priceItem";
+import { fetchShops } from "@/app/services/shopData";
+import { shoppingChainsMap } from "@/app/consts/shoppingChains";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const CATEGORIES_FILE = path.join(DATA_DIR, "categories.txt");
@@ -158,6 +160,59 @@ async function checkStoresAvailability(
     return fallback;
 }
 
+async function findNearestApiShopWithPrice(
+    pid: string,
+    chainName: string,
+    candidatePrice: number,
+): Promise<{ address: string; price: number } | null> {
+    let shops: Awaited<ReturnType<typeof fetchShops>>;
+    try {
+        console.log(`findNearestApiShopWithPrice: fetching shops for pid=${pid}, chainName=${chainName}, candidatePrice=${candidatePrice}`);
+        shops = await fetchShops();
+    } catch (e) {
+        console.error("findNearestApiShopWithPrice: fetchShops failed", e);
+        return null;
+    }
+
+    const chain = shoppingChainsMap[chainName];
+    if (!chain) return null;
+
+    const chainShops = shops.filter((s) => s.chainStoreUuid === chain.uuid);
+
+    for (const shop of chainShops) {
+        const url = `https://arfigyelo.gvh.hu/api/product/${encodeURIComponent(pid)}/shop/${encodeURIComponent(shop.uuid)}`;
+        try {
+            const res = await fetch(url);
+            if (res.status === 200) {
+                const json = await res.json();
+                const apiPrices: ApiPrice[] = (json.shops ?? []).flatMap(
+                    (sh: any) =>
+                        (sh.prices ?? []).map((p: any) => ({
+                            type: String(p.type ?? ""),
+                            amount: Number(p.amount ?? 0),
+                            unitAmount: Number(p.unitAmount ?? 0),
+                        }))
+                );
+                const priceMatches =
+                    Number.isFinite(candidatePrice) &&
+                    apiPrices.some(
+                        (p) => Math.abs(p.amount - candidatePrice) < 1 || Math.abs(p.unitAmount - candidatePrice) < 1
+                    );
+                if (priceMatches) {
+                    const bestPrice = apiPrices.reduce((min, p) => Math.min(min, p.unitAmount), Infinity);
+                    return {
+                        address: `${shop.city}, ${shop.address}`,
+                        price: Number.isFinite(bestPrice) ? bestPrice : candidatePrice,
+                    };
+                }
+            }
+        } catch (err) {
+            // ignore and try next shop
+        }
+    }
+    return null;
+}
+
 export async function GET() {
     const { categories, mtime: categoriesMtime } = await readCategoriesFile();
 
@@ -179,7 +234,6 @@ export async function GET() {
     const stores = await readStores();
     const storesMtime = await getFileMtime(STORES_FILE);
 
-    // return cached results if data and category/store files haven't changed
     if (cachedResults && cachedResults.dataRef === data && cachedResults.categoriesMtime === categoriesMtime && cachedResults.storesMtime === storesMtime) {
         const lastChecked = await readLastDownloaded();
         return NextResponse.json({ results: cachedResults.results, lastChecked });
@@ -214,6 +268,8 @@ export async function GET() {
         type AvailableCandidate = StoreAvailability & { row: ProductDataExcelRow; effectivePrice: number };
         const allAvailable: AvailableCandidate[] = [];
         const confirmedChains = new Set<string>();
+
+        const bestCandidate = candidates[0];
 
         for (const candidate of candidates) {
             // Stop once we have 3 confirmed (price-matching) chains
@@ -271,15 +327,26 @@ export async function GET() {
         }
 
         const primary = availableBest.length > 0 ? availableBest[0].row : null;
-
-        results.push({
-            prices: availableBest.map((b) => ({
+        let nearestNotFavoriteShopData: null | string = null;
+        let prices: PriceItem["prices"] = [];
+        if (primary && availableBest.length > 0) {
+            prices = availableBest.map((b) => ({
                 price: b.apiPrices.length > 0
                     ? b.apiPrices.reduce((min, p) => Math.min(min, p.unitAmount), Infinity)
                     : parseNumber(b.row.minUnitPrice),
                 chainName: b.row.chainName,
                 storeName: b.store.address,
-            })),
+            }));
+        }
+
+        if (!prices.length || prices.length && prices[0].price !== bestPossiblePrice) {
+            const bestPossibleChainName = bestCandidate.chainName ?? null;
+            const nearestShop = await findNearestApiShopWithPrice(bestCandidate.productId, bestPossibleChainName, bestPossiblePrice!);
+            nearestNotFavoriteShopData = `${bestPossiblePrice}Ft @ ${bestPossibleChainName} ${nearestShop?.address ?? "unknown"}`;
+        }
+
+        results.push({
+            prices,
             categoryId: id,
             categoryName: primary?.categoryName ?? null,
             productId: primary?.productId ?? null,
@@ -288,10 +355,10 @@ export async function GET() {
             package: primary?.package ?? null,
             bestPossiblePrice,
             bestPossibleChainName,
+            nearestNotFavoriteShopData,
         });
     }
 
-    // update cache
     cachedResults = {
         results,
         dataRef: data,

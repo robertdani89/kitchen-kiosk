@@ -8,4 +8,5 @@ export type PriceItem = {
     package: string | null;
     bestPossiblePrice: number | null;
     bestPossibleChainName: string | null;
+    nearestNotFavoriteShopData: string | null;
 };
