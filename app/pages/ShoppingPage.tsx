@@ -49,42 +49,49 @@ export default function ShoppingPage() {
                         <div className="text-sm text-gray-500">No items found. Add category IDs in Shopping Settings.</div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {items.map((it) => (
-                                <div>
+                            {items.map((it) => {
+                                const prices = it.nearestNotFavoriteShopData ? it.prices.slice(0, 2) : it.prices;
+                                return (
+                                    <div>
 
-                                    <div key={`${it.categoryId}${it.unit}`} className="p-3 bg-gray-50 rounded flex items-center justify-between gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-medium font-semibold text-sm truncate">{it.categoryName}</div>
-                                            <div
-                                                className="text-sm text-gray-600"
-                                                style={{
-                                                    display: "-webkit-box",
-                                                    WebkitLineClamp: 2,
-                                                    WebkitBoxOrient: "vertical",
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                }}
-                                            >
-                                                {it.productName ?? "—"}
+                                        <div key={`${it.categoryId}${it.unit}`} className="p-3 bg-gray-50 rounded flex items-center justify-between gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium font-semibold text-sm truncate">{it.categoryName}</div>
+                                                <div
+                                                    className="text-sm text-gray-600"
+                                                    style={{
+                                                        display: "-webkit-box",
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: "vertical",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    {it.productName ?? "—"}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end ml-3">
+                                                {it.nearestNotFavoriteShopData !== null && (
+                                                    <div className="text-sm text-gray-700">
+                                                        <div className="bg-gray-50 text-xs text-gray-400 text-right">{it.nearestNotFavoriteShopData}</div>
+                                                    </div>
+                                                )}
+
+                                                {prices.map((p, idx) => (
+                                                    <div key={idx} className="text-sm text-gray-700">
+                                                        <span className="font-semibold">{p.price.toFixed(2)}Ft</span>{" "}
+                                                        <img src={shoppingChainsMap[p.chainName].icon} alt={p.chainName} className="inline-block w-4 h-4 mr-1" />{p.storeName}
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-end ml-3">
-                                            {it.prices.map((p, idx) => (
-                                                <div key={idx} className="text-sm text-gray-700">
-                                                    <span className="font-semibold">{p.price.toFixed(2)}Ft</span>{" "}
-                                                    <img src={shoppingChainsMap[p.chainName].icon} alt={p.chainName} className="inline-block w-4 h-4 mr-1" />{p.storeName}
-                                                </div>
-                                            ))}
-                                        </div>
                                     </div>
-                                    {it.nearestNotFavoriteShopData !== null && (
-                                        <div className="bg-gray-50 text-xs text-gray-400 text-right">{it.nearestNotFavoriteShopData}</div>
-                                    )}
-                                </div>
-                            ))}
-
+                                )
+                            }
+                            )}
                         </div>
                     )}
+
                 </div>
             </div>
         </div>
