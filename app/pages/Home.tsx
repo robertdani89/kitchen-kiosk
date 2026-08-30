@@ -21,7 +21,7 @@ export default function Home() {
                     <Sensors />
                 </div>
 
-                <div className="row-start-3 col-start-1 col-span-3 row-span-1">
+                <div className="row-start-3 col-start-1 col-span-2 row-span-1">
                     <RadarVideo />
                 </div>
 
