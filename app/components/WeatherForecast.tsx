@@ -11,7 +11,7 @@ export default function WeatherForecast() {
             {weatherForecast ? (
                 <div className="h-full">
                     {/* <h2 className=" mt-2 mb-2">{weatherCity} előrejelzés</h2> */}
-                    <div className="mt-2 grid h-full grid-cols-2 gap-2 text-sm">
+                    <div className="grid h-full grid-cols-2 gap-1 text-sm">
                         {weatherForecast.map((d) => {
                             const dayLetter = (() => {
                                 try {
@@ -23,11 +23,11 @@ export default function WeatherForecast() {
                             return (
                                 <div key={d.date} className="flex flex-col items-center justify-between rounded border border-gray-200 bg-gray-50 p-1">
                                     <div className="">
-                                        <div className="flex flex-col items-center mb-1">
+                                        <div className="flex flex-row items-center mb-1">
                                             <div className="text-sm" title={d.date}>{dayLetter}</div>
                                             <img src={d.icon} alt={d.desc} className="w-15 h-15 m-[-10px]" />
-                                            <div className="text-[15px]">{d.maxTemp.toFixed(1)}°C <span className="text-gray-400">{d.minTemp.toFixed(1)}°C</span></div>
                                         </div>
+                                        <div className="text-[15px]">{d.maxTemp.toFixed(1)}°C <span className="text-gray-400">{d.minTemp.toFixed(1)}°C</span></div>
                                         <div>
                                             <div className="text-[12px] text-gray-400 mb-1">💧{d.humidity}% 🌬️{d.wind.toFixed(1)} m/s</div>
                                             <div className="text-[12px] text-gray-400 mb-1">🔽{d.pressure} hPa</div>
