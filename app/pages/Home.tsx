@@ -1,5 +1,6 @@
 import Calendar from "../components/Calendar";
 import Photos from "../components/Photos";
+import RadarVideo from "../components/RadarVideo";
 import Sensors from "../components/Sensors";
 import Tasks from "../components/Tasks";
 import Verbs from "../components/Verbs";
@@ -13,11 +14,15 @@ export default function Home() {
                 <div className="row-start-1 col-span-2">
                     <WeatherToday />
                 </div>
-                <div className="row-start-2 col-span-2">
+                <div className="row-start-2 col-span-1">
                     <WeatherForecast />
                 </div>
-                <div className="row-start-3 col-start-1 col-span-2">
+                <div className="row-start-2 col-start-2 col-span-1">
                     <Sensors />
+                </div>
+
+                <div className="row-start-3 col-start-1 col-span-3 row-span-1">
+                    <RadarVideo />
                 </div>
 
                 <Calendar />

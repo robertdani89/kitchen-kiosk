@@ -96,13 +96,14 @@ export default function Sensors({
 
     return (
         <section className="h-full w-full bg-white p-1 rounded shadow">
-            <h2 className="mb-2">Szenzorok</h2>
-            <div className="grid grid-cols-4 grid-rows-2 gap-1">
-                {sensors.map((s) => {
+            {/* <h2 className="mb-2">Szenzorok</h2> */}
+            <div className="grid h-full auto-rows-fr grid-cols-2 gap-1">
+                {sensors.map((s, index) => {
                     const d = parseTimestamp(s.last_seen);
                     const showLastSeen = d ? (Date.now() - d.getTime()) > (30 * ms.minute) : false;
+                    const shouldSpanFullRow = sensors.length % 2 === 1 && index === sensors.length - 1;
                     return (
-                        <div key={s.id} className={cardClassesFor(s.last_seen)}>
+                        <div key={s.id} className={`${cardClassesFor(s.last_seen)} h-full ${shouldSpanFullRow ? 'col-span-2' : ''}`}>
                             <div>{s.icon} {s.name}</div>
                             <div className="text-sm">🌡️{s.temperature != null ? `${s.temperature.toFixed(1)} °C` : '—'}</div>
                             <div className="text-sm">💦{s.humidity != null ? `${s.humidity.toFixed(1)} %` : '—'}</div>

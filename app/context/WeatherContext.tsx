@@ -69,12 +69,13 @@ export function WeatherProvider({ children }: { children: React.ReactNode }) {
 
     const groupedForecast = (forecast: any) => {
         if (!forecast || !forecast.list) return [];
+        const today = new Date().toISOString().split('T')[0];
         const byDay: Record<string, any[]> = {};
         for (const item of forecast.list) {
             const d = item.dt_txt.split(' ')[0];
             (byDay[d] ||= []).push(item);
         }
-        return Object.keys(byDay).slice(0, 10).map((date) => {
+        return Object.keys(byDay).filter((date) => date !== today).slice(0, 4).map((date) => {
             const items = byDay[date];
             let minTemp = Infinity, maxTemp = -Infinity, sumTemp = 0, sumPressure = 0, sumHum = 0, sumWind = 0;
             for (const it of items) {

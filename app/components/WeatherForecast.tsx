@@ -10,8 +10,8 @@ export default function WeatherForecast() {
         <section className="h-full grid bg-white p-1 rounded shadow">
             {weatherForecast ? (
                 <div className="h-full">
-                    <h2 className=" mt-2 mb-2">{weatherCity} előrejelzés</h2>
-                    <div className="mt-2 text-sm flex flex-row justify-between gap-1 overflow-x-auto">
+                    {/* <h2 className=" mt-2 mb-2">{weatherCity} előrejelzés</h2> */}
+                    <div className="mt-2 grid h-full grid-cols-2 gap-2 text-sm">
                         {weatherForecast.map((d) => {
                             const dayLetter = (() => {
                                 try {
@@ -21,7 +21,7 @@ export default function WeatherForecast() {
                                 } catch (e) { return d.date; }
                             })();
                             return (
-                                <div key={d.date} className="w-full p-1 bg-gray-50 border border-gray-200 rounded flex flex-col items-center justify-between min-w-[60px]">
+                                <div key={d.date} className="flex flex-col items-center justify-between rounded border border-gray-200 bg-gray-50 p-1">
                                     <div className="">
                                         <div className="flex flex-col items-center mb-1">
                                             <div className="text-sm" title={d.date}>{dayLetter}</div>
