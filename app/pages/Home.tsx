@@ -1,3 +1,4 @@
+import AirQuality from "../components/AirQuality";
 import Calendar from "../components/Calendar";
 import Photos from "../components/Photos";
 import RadarVideo from "../components/RadarVideo";
@@ -25,7 +26,8 @@ export default function Home() {
                     <RadarVideo />
                 </div>
 
-                <Calendar />
+                {/* <Calendar /> */}
+                <AirQuality />
                 <Tasks />
                 <Verbs />
 
