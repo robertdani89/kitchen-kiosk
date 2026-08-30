@@ -47,7 +47,7 @@ export default function RadarVideo() {
                     <video
                         ref={videoRef}
                         key={videoSrc}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain"
                         autoPlay
                         loop
                         muted
