@@ -118,8 +118,12 @@ export default function AirQuality() {
         }
 
         void load();
+        const intervalId = setInterval(() => {
+            void load();
+        }, 15 * 60 * 1000);
         return () => {
             cancelled = true;
+            clearInterval(intervalId);
         };
     }, []);
 
