@@ -22,6 +22,7 @@ export default function Sensors({
         { id: 1, name: 'Outside', topic: 'Outside temp', temperature: null, humidity: null, last_seen: '', icon: '🌳' },
         { id: 2, name: 'Living room', topic: 'Living room temp', temperature: null, humidity: null, last_seen: '', icon: '🛋️' },
         { id: 3, name: 'Bedroom', topic: 'Bedroom temp', temperature: null, humidity: null, last_seen: '', icon: '🛏️' },
+        { id: 4, name: 'Playroom', topic: 'Playroom temp', temperature: null, humidity: null, last_seen: '', icon: '🧸' },
     ]);
 
     const processIncoming = (topic: string, payload: any) => {
