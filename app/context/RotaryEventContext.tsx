@@ -42,7 +42,7 @@ export function RotaryEventProvider({ children }: { children: React.ReactNode })
         const id = subscribeToWebSocket((topic, payload) => {
             try {
                 const t = String(topic || "");
-                if (t !== "Office cube") return;
+                if (t !== "Kitchen cube") return;
 
                 let action: string | null = payload?.action ?? payload?.payload?.action ?? null;
                 if (!action && typeof payload === "string") {
